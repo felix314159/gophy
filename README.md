@@ -6,9 +6,11 @@ Gophy is p2p software written from scratch to implement and test ideas for a nov
 
 [Building the source](#building)
 
+
 <a name="features"/>
 ## Features
 todo
+
 
 <a name="building"/>
 ## Building the source
