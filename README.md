@@ -2,21 +2,24 @@
 Gophy is p2p software written from scratch to implement and test ideas for a novel blockchain network that is based on the idea of useful work. Its goal is to provide anyone the ability to donate computational power to a real-world High Energy Physics (HEP) experiment by running Monte Carlo simulation tasks sent out by a privileged node called the Root Authority (RA). The RA is a node that will be run by a representative of the experiment to ensure the 'usefulness' aspect of tasks.
 
 ## Table of Contents
-[Features](#features)
+* [Features](#features)
 
-[Build instructions](#building)
+* [Build instructions](#building)
 
-[Usage](#usage)
+    * [Build gophy](#buildingGophy)
+    * [Build cbmroot](#buildingCbmroot)
 
-[Contribution](#contribution)
+* [Usage](#usage)
 
-[Documentation](#documentation)
+* [Contribution](#contribution)
 
-[Work in progress](#wip)
+* [Documentation](#documentation)
 
-[Credits](#credits)
+* [Work in progress](#wip)
 
-[License](#license)
+* [Credits](#credits)
+
+* [License](#license)
 
 ## Features
 todo
@@ -27,9 +30,11 @@ todo
 <a name="building"/>
 ### Building gophy
 todo
+<a name="buildingGophy"/>
 ### Building cbmroot software environment
 This step is only necessary when you want to run a miner that actively works on simulation tasks.
 It can be skipped when you run gophy as a normal full or light node.
+<a name="buildingCbmroot"/>
 
 ## Usage / Running gophy
 todo
