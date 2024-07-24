@@ -6,8 +6,8 @@ Gophy is p2p software written from scratch to implement and test ideas for a nov
 
 * [Build instructions](#building)
 
-    * [Build gophy](#buildingGophy)
-    * [Build cbmroot](#buildingCbmroot)
+    * [Building gophy](#buildingGophy)
+    * [Building CbmRoot](#buildingCbmroot)
 
 * [Usage](#usage)
 
@@ -25,15 +25,16 @@ Gophy is p2p software written from scratch to implement and test ideas for a nov
 todo
 <a name="features"/>
 
-## Building instructions
+## Build instructions
 todo
 <a name="building"/>
 ### Building gophy
 todo
 <a name="buildingGophy"/>
-### Building cbmroot software environment
-This step is only necessary when you want to run a miner that actively works on simulation tasks.
-It can be skipped when you run gophy as a normal full or light node.
+### Building CbmRoot
+This step is only necessary when you want to run a miner that actively works on simulation tasks and it can be skipped when you run gophy as a normal full or light node.
+
+[CbmRoot](https://git.cbm.gsi.de/computing/cbmroot) is the analysis and simulation framework used by the CBM experiment at FAIR in Darmstadt. In order to use cbmroot you first need to acquire required external software that is contained in the [FairSoft](https://github.com/FairRootGroup/FairSoft) repository.
 <a name="buildingCbmroot"/>
 
 ## Usage / Running gophy
