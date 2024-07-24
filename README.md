@@ -4,14 +4,59 @@ Gophy is p2p software written from scratch to implement and test ideas for a nov
 ## Table of Contents
 [Features](#features)
 
-[Building the source](#building)
+[Build instructions](#building)
 
+[Usage](#usage)
 
+[Contribution](#contribution)
+
+[Documentation](#documentation)
+
+[Work in progress](#wip)
+
+[Credits](#credits)
+
+[License](#license)
 
 ## Features
 todo
 <a name="features"/>
 
-<a name="building"/>
-## Building the source
+## Building instructions
 todo
+<a name="building"/>
+### Building gophy
+todo
+### Building cbmroot software environment
+This step is only necessary when you want to run a miner that actively works on simulation tasks.
+It can be skipped when you run gophy as a normal full or light node.
+
+## Usage / Running gophy
+todo
+<a name="usage"/>
+### Flags
+todo
+### Dashboard
+todo
+### Examples
+todo
+
+## Contribution
+todo
+<a name="contribution"/>
+
+## Documentation
+todo
+<a name="documentation"/>
+
+## WIP (Work in progress)
+todo
+<a name="wip"/>
+
+## Credits
+todo
+<a name="credits"/>
+
+## License
+todo
+<a name="license"/>
