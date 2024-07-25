@@ -63,6 +63,7 @@ Note: If your CPU architecture is not x86_64 but instead ARM, set ```GOARCH=arm6
 These commands will create a binary called gophy in the current directory. It is recommended to statically build gophy so that it could also be run in a minimal scratch docker container.
 
 <a name="buildingGophy"/>
+
 ### Building cbmroot
 This step is only necessary when you want to run a miner that actively works on simulation tasks and it can be skipped when you run gophy as a normal full or light node.
 
@@ -80,7 +81,20 @@ todo
 todo
 
 ## Docker setup
-todo
+This section can be skipped for normal usage of gophy (there is no need to run it in Docker). However, it is recommended to use Docker when you want to run many nodes on the same machine.
+First install Docker Engine as describe in the [official instructions](https://docs.docker.com/engine/install/). Docker Desktop is not needed here, so just choose your OS from list of supported platforms and follow the instructions for Docker Engine. Then follow the [post-install instructions](https://docs.docker.com/engine/install/linux-postinstall/) so that you can run Docker without root privileges.
+
+In order to run many gophy nodes locally to test their performance under controlled but adjustable networking conditions (more details about the usage of tc-netem will follow), navigate to the docker folder of this repo and perform the following steps. These steps assume you are using some Linux-distro:
+* 0. Statically compile gophy and place the binary in the docker folder of this repo. Then navigate your terminal to that folder.
+* 1. Build image:
+    * ```docker build -t gophyimage .```
+* 2. Run multiple nodes (4x light node + 4x full node + 1x Root Authority):
+    * chmod +x runNodes.sh
+    * ./runNodes.sh
+* 3. Stop all nodes
+    * docker stop $(docker ps -a -q)
+
+More useful docker commands can be found in my [docker-tutorial]().
 <a name="docker"/>
 
 ## Contribution
