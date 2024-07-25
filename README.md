@@ -123,17 +123,27 @@ Miner examples:
 * You had a miner node but you stopped running it. Now continue running the same miner (using same identity and preserving data that was already locally stored). This command fails if the provided password is wrong:
     *   ```./gophy -syncMode=SyncMode_Continuous_Mine -httpPort=8098 -dockerAlias=miner1 -pw=mysuperstrongpassword```
 
+---
+
 Full node examples:
 * Create a new full node identity and sync to the network for the first time. Then help other nodes to sync but do not try to work on block problems (does not require cbmroot environment):
     *  ```./gophy -syncMode=SyncMode_Initial_Full -httpPort=8098 -dockerAlias=fullnode1```
 * You had a full node but you stopped running it. Now continue running the same full node (using same identity and preserving data that was already locally stored):
     *   ```./gophy -syncMode=SyncMode_Continuous_Full -httpPort=8098 -dockerAlias=fullnode1```
- 
+
+---
+
 Light node examples:
 * Create a new light node identity and sync to the network for the first time. Then help other nodes to sync whenever possible but do not try to work on block problems (does not require cbmroot environment):
     *  ```./gophy -syncMode=SyncMode_Initial_Light -httpPort=8098 -dockerAlias=lightnode1```
 * You had a light node but you stopped running it. Now continue running the same light node (using same identity and preserving data that was already locally stored):
     *   ```./gophy -syncMode=SyncMode_Continuous_Light -httpPort=8098 -dockerAlias=lightnode1```
+
+---
+
+Generally, the "Initial" means that all local data is deleted to start a new node from scratch. "Continuous" means try to re-use locally existing data and continue from there. Both "Initial" and "Continuous" mode nodes will perform an initial sync, but there is a difference: The "Initial" mode nodes have deleted all local data so they must request all data from other nodes, "Continuous" nodes however first ask the node network which block hashes exist to determine how much new data they need and then they only request the data that currently is locally missing. 
+
+Finally, the difference between "Light", "Full" and "Mine" syncModes is what the final state will be: By choosing light you will end up with a light node, with full you will end up with a full node that does not try to solve block problems and with mine you will end up with a full node that does try to solve block problems. So the syncMode not only affects the behavior of the node during the initial sync phase but also the node behavior after having completed its initial sync.
 
 <a name="usageExamples"/>
 
