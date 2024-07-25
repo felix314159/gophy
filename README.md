@@ -13,6 +13,10 @@ Gophy is p2p software written from scratch to implement and test ideas for a nov
 
 * [Usage](#usage)
 
+    * [Flags](#flags)
+    * [Dashboard](#dashboard)
+    * [Usage examples](#usageExamples)
+
 * [Contribution](#contribution)
 
 * [Documentation](#documentation)
@@ -106,12 +110,15 @@ The following command-line flags are currently supported:
 | raReset | false | This flag is used during testing/development to start the RA after resetting all blockchain data to genesis. |
 
 For more information about all possible values for each flag and their effects be sure to check out the documentation.
+<a name="flags"/>
 
 ### Dashboard
 A lightweight monitoring solution was written from scratch so that the activities of multiple nodes running e.g. via Docker can be easily observed. Gophy runs a simple HTTP server at localhost:12345 that locally run nodes send information about what they are currently doing to. The server is only started when it is not already running, so there is no issue when many nodes are started at once using Docker. The dashboard is viewed via the browser, updates in real-time and separates information of each node by their dockerAlias string. Each message sent by a node to the dashboard contains information about the current timestamp, what kind of event occurred (e.g. connected to new node) and a message field that can hold an arbitrary string to provide additional information.
+<a name="dashboard"/>
 
-### Examples
+### Usage examples
 todo
+<a name="usageExamples"/>
 
 ## Contribution
 Gophy is in active developement and any form of feedback or improvement suggestions are welcome. If you have questions about the blockchain architecture itself you can ask in the [Discussions](https://github.com/felix314159/gophy/discussions) tab that was set up. If you want to help improve the code itself feel free to fork and send pull requests, but ensure to document your code with pkgsite-compatible comments so that the documentation can automatically stay up-to-date. You can also [report any issues](https://github.com/felix314159/gophy/issues) or concerns you might have.
