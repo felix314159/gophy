@@ -121,7 +121,7 @@ Miner examples:
 * Create a new miner node identity and sync to the network for the first time. Then actively work on block problems to earn tokens (requires running node in cbmroot environment). Encrypt your identity file (private key) with a custom password:
     *  ```./gophy -syncMode=SyncMode_Initial_Mine -httpPort=8098 -dockerAlias=miner1 -pw=mysuperstrongpassword```
 * You had a miner node but you stopped running it. Now continue running the same miner (using same identity and preserving data that was already locally stored). This command fails if the provided password is wrong:
-    *   ```./gophy -syncMode=SyncMode_Continuous_Mine -httpPort=8098 -dockerAlias=miner1 -pw=mysuperstrongpassword```
+    *   ```./gophy -syncMode=SyncMode_Continuous_Mine -httpPort=8098 -dockerAlias=miner1 -localKeyFile=true -pw=mysuperstrongpassword```
 
 ---
 
@@ -129,7 +129,7 @@ Full node examples:
 * Create a new full node identity and sync to the network for the first time. Then help other nodes to sync but do not try to work on block problems (does not require cbmroot environment):
     *  ```./gophy -syncMode=SyncMode_Initial_Full -httpPort=8098 -dockerAlias=fullnode1```
 * You had a full node but you stopped running it. Now continue running the same full node (using same identity and preserving data that was already locally stored):
-    *   ```./gophy -syncMode=SyncMode_Continuous_Full -httpPort=8098 -dockerAlias=fullnode1```
+    *   ```./gophy -syncMode=SyncMode_Continuous_Full -httpPort=8098 -dockerAlias=fullnode1 -localKeyFile=true```
 
 ---
 
@@ -137,7 +137,7 @@ Light node examples:
 * Create a new light node identity and sync to the network for the first time. Then help other nodes to sync whenever possible but do not try to work on block problems (does not require cbmroot environment):
     *  ```./gophy -syncMode=SyncMode_Initial_Light -httpPort=8098 -dockerAlias=lightnode1```
 * You had a light node but you stopped running it. Now continue running the same light node (using same identity and preserving data that was already locally stored):
-    *   ```./gophy -syncMode=SyncMode_Continuous_Light -httpPort=8098 -dockerAlias=lightnode1```
+    *   ```./gophy -syncMode=SyncMode_Continuous_Light -httpPort=8098 -dockerAlias=lightnode1 -localKeyFile=true```
 
 ---
 
