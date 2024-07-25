@@ -46,4 +46,8 @@ Note: If you are having issues on getting pkgsite to run ensure that your Go ins
 it should print the path to \<yourHomeFolder\>/go.
 The path to the gophy project should be something like \<yourHomeFolder\>/go/src/example.org/gophy.
 
-Pkgsite on windows might not work when a different setup is used.
+Pkgsite on windows might not work when a different setup is used. If it still does not work delete go.mod and go.sum and then run the following commands:
+* ```go mod init example.org/gophy```
+* ```go mod tidy```
+
+then try again.
