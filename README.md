@@ -95,7 +95,7 @@ This section goes into detail about which flags you can use to affect the behavi
 The following command-line flags are currently supported:
 | Flag    | Default value | Description |
 | -------- | ------- | ------- |
-| todo1  | todo1    | todo1 |
+| topicNames  | pouw_chaindb,pouw_newProblem,pouw_newBlock,pouw_minerCommitments,pouw_transactions,pouw_raSecretReveal    | Choose which topics to subscribe to. Must be one string that is comma-separated, contains no spaces and no : chars. |
 | todo2 | todo2     | todo2 |
 | todo3    | todo3    | todo3 |
 
