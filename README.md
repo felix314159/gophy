@@ -158,7 +158,9 @@ Gophy is in active developement and any form of feedback or improvement suggesti
 <a name="contribution"/>
 
 ## Documentation
-todo
+The code makes use of pkgsite-compatible comments used to automatically generate a documentation that can be accessed via the browser. In order to locally host the documentation read throught my [pkgsite tutorial]. An online version of the documentation will also soon be available.
+
+The documentation contains more detailed information than this repository and should be used as a reference for users and developers. Not only does it make it easier to understand the existing codebase but it can also be utilized by users to learn more e.g. about differences between the different kinds of nodes gophy supports.
 <a name="documentation"/>
 
 ## WIP (Work in progress)
