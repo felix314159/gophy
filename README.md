@@ -94,7 +94,7 @@ In order to run many gophy nodes locally to test their performance under control
 * 3. Stop all nodes
     * ```docker stop $(docker ps -a -q)```
 
-More useful docker commands can be found in my [docker-tutorial](https://github.com/felix314159/gophy/blob/main/tutorials/docker-tutorial-linux-githubVersion.md).
+More useful docker commands can be found in my [docker-tutorial](https://github.com/felix314159/gophy/blob/main/tutorials/docker-tutorial-linux-githubVersion.md). The sh script used was created to test syncing nodes from scratch under different networking conditions that are artificially introduced using tc-netem. For this reason, the script configures the nodes to fully reset and create a new identity each time they are started.
 <a name="docker"/>
 
 ## Contribution
