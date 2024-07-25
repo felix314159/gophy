@@ -95,9 +95,14 @@ This section goes into detail about which flags you can use to affect the behavi
 The following command-line flags are currently supported:
 | Flag    | Default value | Description |
 | -------- | ------- | ------- |
-| topicNames  | pouw_chaindb,pouw_newProblem,<br>pouw_newBlock,pouw_minerCommitments,<br>pouw_transactions,pouw_raSecretReveal    | Choose which [PubSub](https://docs.libp2p.io/concepts/pubsub/overview/) topics to subscribe to |
-| todo2 | todo2     | todo2 |
-| todo3    | todo3    | todo3 |
+| topicNames | pouw_chaindb,pouw_newProblem,<br>pouw_newBlock,pouw_minerCommitments,<br>pouw_transactions,pouw_raSecretReveal | Choose which [PubSub](https://docs.libp2p.io/concepts/pubsub/overview/) topics to subscribe to |
+| syncMode | SyncMode_Initial_Full | Defines which kind of node will be run and affects its behavior. |
+| localKeyFile | false | When set to true, start the node and re-use an existing private key (which is the node's identity). When set to false, a new identity (Ed25519 key) will be created and stored in OpenSSH format as privkey.key. |
+| pw | insecurepassword | Sets the password that is used to encrypt the private key before it is written in OpenSSH format as privkey.key. It is recommended to set a secure password when running a node in production. Gophy will warn you when you do not set a different password than the default. |
+| raMode | false | This flag is used to make the node behave as the Root Authority. This only works when you have access to the private key of the RA because each message sent must be signed and other nodes know the public key of the RA. |
+| raReset | false | This flag is used during testing/development to start the RA after resetting all blockchain data to genesis. |
+
+For more information about all possible values for each flag and their effects be sure to check out the documentation.
 
 ### Dashboard
 todo
