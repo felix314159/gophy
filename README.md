@@ -88,7 +88,7 @@ In order to run many gophy nodes locally to test their performance under control
 * 0. Statically compile gophy and place the binary in the docker folder of this repo. Then navigate your terminal to that folder.
 * 1. Build image:
     * ```docker build -t gophyimage .```
-* 2. Run multiple nodes (4x light node + 4x full node + 1x Root Authority):
+* 2. Run multiple nodes (3x light node + 3x full node + 1x Root Authority):
     * chmod +x runNodes.sh
     * ./runNodes.sh
 * 3. Stop all nodes
