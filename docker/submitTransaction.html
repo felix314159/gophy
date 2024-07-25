@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Layout should adapt to screen size -->
+    <title>Submit Transaction</title>
+    <style>
+        input[type="text"] {
+            width: 600px;           /* Size of input fields */
+            margin-bottom: 20px;    /* Add a bit more vertical space between elements */
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            width: 600px;           /* Size of static text shown */
+        }
+        button {
+            align-self: flex-start; /* Sets button location */
+            margin-top: 10px;
+        }
+    </style>
+    <script>
+        // confirmSubmit adds a confirmation dialogue to the 'Submit' button that the user has to confirm
+        function confirmSubmit(event) {
+            if (confirm("Do you really want to submit this transaction?")) {
+                handleSubmit(event);
+            }
+        }
+
+        async function handleSubmit(event) {
+            event.preventDefault();                                         // Don't do default action (which seems to be displaying some JSON/Raw Data/ Headers overview in the browser)
+            
+            const form = document.getElementById('transactionForm');        // Get reference to the actual form
+
+            const formData = new FormData(form);                            // Capture all form data as key-value pairs
+            const response = await fetch(form.action, {                     // Send data via fetch api
+                method: form.method,                                        // The method of the form /submit is POST
+                body: formData                                              // Data to be sent
+            });
+            const result = await response.json();                           // Await response as JSON object and parse it
+            document.getElementById('response').innerText = result.message; // Display server response
+        }
+    </script>
+</head>
+<body>
+    <h1>Submit Transaction</h1>
+    <form id="transactionForm" action="/submitTransaction" method="post" onsubmit="handleSubmit(event)">
+        <label for="toAddress">To (e.g. 12D3KooWEYSb69dzeojEH1PygPWef9V1qQJqrGKUEMMsbA4keAyZ):</label>
+        <input type="text" id="toAddress" name="toAddress">
+        
+        <label for="value">Amount of Tokens to be sent (e.g. 0.2):</label>
+        <input type="text" id="value" name="value">
+
+        <label for="fee">Fee [amount of tokens to burn for transaction priority] (min required value: 0.00000001):</label>
+        <input type="text" id="fee" name="fee">
+
+        <label for="reference">Reference (e.g. foo123):</label>
+        <input type="text" id="reference" name="reference">
+
+        <button type="button" onclick="confirmSubmit(event)">Submit</button>    <!-- Require confirmation to queue transaction -->
+    </form>
+    <p id="response"></p>
+</body>
+</html>
