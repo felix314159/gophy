@@ -11,6 +11,8 @@ Gophy is p2p software written from scratch to implement and test ideas for a nov
 
 * [Usage](#usage)
 
+* [Docker setup](#docker)
+
 * [Contribution](#contribution)
 
 * [Documentation](#documentation)
@@ -56,6 +58,10 @@ In order to statically build the gophy binary navigate to the root folder of thi
 
     * ```CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build .```
 
+Note: If your CPU architecture is not x86_64 but instead ARM, set GOARCH=arm64.
+
+These commands will create a binary called gophy in the current directory. It is recommended to statically build gophy so that it can run in a minimal scratch docker container.
+
 <a name="buildingGophy"/>
 ### Building cbmroot
 This step is only necessary when you want to run a miner that actively works on simulation tasks and it can be skipped when you run gophy as a normal full or light node.
@@ -72,6 +78,10 @@ todo
 todo
 ### Examples
 todo
+
+## Docker setup
+todo
+<a name="docker"/>
 
 ## Contribution
 todo
