@@ -47,10 +47,13 @@ In order to build gophy you must install Golang. Follow official [Golang install
 ### Building gophy
 In order to statically build the gophy binary navigate to the root folder of this repo and then use one of the following commands depending on your OS:
 * Windows:
+
 ```CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build .```
 * MacOS:
+
 ```CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build .```
 * Linux-based OS:
+
 ```CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build .```
 
 <a name="buildingGophy"/>
