@@ -30,7 +30,7 @@ Using Windows (manually add it to path via environment variables):
 ---
 ---
 
-3. Then run:
+3. Then navigate to the root dir of the repo and run:
 * ```pkgsite -open .```
 
 ---
