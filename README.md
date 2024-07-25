@@ -89,10 +89,10 @@ In order to run many gophy nodes locally to test their performance under control
 * 1. Build image:
     * ```docker build -t gophyimage .```
 * 2. Run multiple nodes (3x light node + 3x full node + 1x Root Authority):
-    * chmod +x runNodes.sh
-    * ./runNodes.sh
+    * ```chmod +x runNodes.sh```
+    * ```./runNodes.sh```
 * 3. Stop all nodes
-    * docker stop $(docker ps -a -q)
+    * ```docker stop $(docker ps -a -q)```
 
 More useful docker commands can be found in my [docker-tutorial](https://github.com/felix314159/gophy/blob/main/tutorials/docker-tutorial-linux-githubVersion.md).
 <a name="docker"/>
