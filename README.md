@@ -108,7 +108,7 @@ The following command-line flags are currently supported:
 For more information about all possible values for each flag and their effects be sure to check out the documentation.
 
 ### Dashboard
-todo
+A lightweight monitoring solution was written from scratch so that the activities of multiple nodes running e.g. via Docker can be easily observed. Gophy runs a simple HTTP server at localhost:12345 that locally run nodes send information about what they are currently doing to. The server is only started when it is not already running, so there is no issue when many nodes are started at once using Docker. The dashboard is viewed via the browser, updates in real-time and separates information of each node by their dockerAlias string. Each message sent by a node to the dashboard contains information about the current timestamp, what kind of event occurred (e.g. connected to new node) and a message field that can hold an arbitrary string to provide additional information.
 
 ### Examples
 todo
