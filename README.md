@@ -42,10 +42,17 @@ Gophy is p2p software written from scratch to implement and test ideas for a nov
 <a name="features"/>
 
 ## Build instructions
-todo
+In order to build gophy you must install Golang. Follow official [Golang installation instructions](https://go.dev/doc/install) before continuing.
 <a name="building"/>
 ### Building gophy
-todo
+In order to statically build the gophy binary navigate to the root folder of this repo and then use one of the following commands depending on your OS:
+* Windows:
+```CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build .```
+* MacOS:
+```CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build .```
+* Linux-based OS:
+```CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build .```
+
 <a name="buildingGophy"/>
 ### Building cbmroot
 This step is only necessary when you want to run a miner that actively works on simulation tasks and it can be skipped when you run gophy as a normal full or light node.
