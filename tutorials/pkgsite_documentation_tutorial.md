@@ -10,12 +10,15 @@ This tutorial assumes Golang is installed and its binary available in the PATH.
 Using Linux: Add the following line to ~/.profile :
 * ```export PATH="/usr/local/go/bin:$PATH"```
 
+Then run:
+* ```source ~/.profile```
+
 Using MacOS: Add the following line to ~/.zshrc :
 * ```export PATH="/Users/$USER/go/bin:$PATH"```
-    then on MacOS you run:
+
+Then run:
 * ```source ~/.zshrc```
-   	or on Linux you run:
-* ```source ~/.profile```
+
 
 Using Windows (manually add it to path via environment variables):
 * ```/home/$USER/go/bin```  [not sure if $USER is valid on windows, when in doubt just put your username]
