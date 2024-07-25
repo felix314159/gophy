@@ -37,3 +37,13 @@ Using Windows (manually add it to path via environment variables):
 ---
 
 4. Congrats, now just open ```http://localhost:8080/``` in the browser to view the locally hosted documentation.
+
+---
+---
+
+Note: If you are having issues on getting pkgsite to run ensure that your Go installation is correctly configured. When you run
+```go env GOPATH```
+it should print the path to <yourHomeFolder>/go.
+The path to the gophy project should be something like <yourHomeFolder>/go/src/example.org/gophy.
+
+Pkgsite on windows might not work when a different setup is used.
