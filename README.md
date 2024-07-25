@@ -9,9 +9,9 @@ Gophy is p2p software written from scratch to implement and test ideas for a nov
     * [Building gophy](#buildingGophy)
     * [Building cbmroot](#buildingCbmroot)
 
-* [Usage](#usage)
-
 * [Docker setup](#docker)
+
+* [Usage](#usage)
 
 * [Contribution](#contribution)
 
@@ -70,16 +70,6 @@ This step is only necessary when you want to run a miner that actively works on 
 [CbmRoot](https://git.cbm.gsi.de/computing/cbmroot) is the analysis and simulation framework used by the CBM experiment at FAIR in Darmstadt. In order to use cbmroot you first need to acquire required external software that is contained in the [FairSoft](https://github.com/FairRootGroup/FairSoft) repository. You can follow the linked official resources to build the software environment or if you are using Ubuntu 24.04 LTS you can also use my own [simplified instructions](https://github.com/felix314159/gophy/blob/main/tutorials/ubuntu24.04_cbmsoft-cbmroot_installationInstructions.pdf).
 <a name="buildingCbmroot"/>
 
-## Usage / Running gophy
-todo
-<a name="usage"/>
-### Flags
-todo
-### Dashboard
-todo
-### Examples
-todo
-
 ## Docker setup
 This section can be skipped for normal usage of gophy (there is no need to run it in Docker). However, it is recommended to use Docker when you want to run many nodes on the same machine.
 First install Docker Engine as describe in the [official instructions](https://docs.docker.com/engine/install/). Docker Desktop is not needed here, so just choose your OS from list of supported platforms and follow the instructions for Docker Engine. Then follow the [post-install instructions](https://docs.docker.com/engine/install/linux-postinstall/) so that you can run Docker without root privileges.
@@ -96,6 +86,24 @@ In order to run many gophy nodes locally to test their performance under control
 
 More useful docker commands can be found in my [docker-tutorial](https://github.com/felix314159/gophy/blob/main/tutorials/docker-tutorial-linux-githubVersion.md). The sh script used was created to test syncing nodes from scratch under different networking conditions that are artificially introduced using tc-netem. For this reason, the script configures the nodes to fully reset and create a new identity each time they are started.
 <a name="docker"/>
+
+## Usage / Running gophy
+This section goes into detail about which flags you can use to affect the behavior of gophy, how monitoring of multiple nodes works and provides gophy usage examples with explanations.
+<a name="usage"/>
+
+### Flags
+The following command-line flags are currently supported:
+| Flag    | Default value | Description |
+| -------- | ------- | ------- |
+| todo1  | todo1    | todo1 |
+| todo2 | todo2     | todo2 |
+| todo3    | todo3    | todo3 |
+
+### Dashboard
+todo
+
+### Examples
+todo
 
 ## Contribution
 Gophy is in active developement and any form of feedback or improvement suggestions are welcome. If you have questions about the blockchain architecture itself you can ask in the [Discussions](https://github.com/felix314159/gophy/discussions) tab that was set up. If you want to help improve the code itself feel free to fork and send pull requests, but ensure to document your code with pkgsite-compatible comments so that the documentation can automatically stay up-to-date. You can also [report any issues](https://github.com/felix314159/gophy/issues) or concerns you might have.
