@@ -98,7 +98,7 @@ More useful docker commands can be found in my [docker-tutorial](https://github.
 <a name="docker"/>
 
 ## Contribution
-todo
+Gophy is in active developement and any form of feedback or improvement suggestions are welcome. If you have questions about the blockchain architecture itself you can ask in the [Discussions](https://github.com/felix314159/gophy/discussions) tab that was set up. If you want to help improve the code itself feel free to fork and send pull requests, but ensure to document your code with pkgsite-compatible comments so that the documentation can automatically stay up-to-date. You can also [report any issues](https://github.com/felix314159/gophy/issues) or concerns you might have.
 <a name="contribution"/>
 
 ## Documentation
