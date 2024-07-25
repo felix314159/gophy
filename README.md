@@ -141,7 +141,7 @@ Light node examples:
 
 ---
 
-Generally, the "Initial" means that all local data is deleted to start a new node from scratch. "Continuous" means try to re-use locally existing data and continue from there. Both "Initial" and "Continuous" mode nodes will perform an initial sync, but there is a difference: The "Initial" mode nodes have deleted all local data so they must request all data from other nodes, "Continuous" nodes however first ask the node network which block hashes exist to determine how much new data they need and then they only request the data that currently is locally missing. 
+Generally, the "Initial" means that all local data is deleted to start a new node from scratch. "Continuous" means try to re-use locally existing data and continue from there. Both "Initial" and "Continuous" mode nodes will perform an initial sync, but there is a slight difference: The "Initial" mode nodes have deleted all local data so they must request all data from other nodes, "Continuous" nodes however first ask the node network which block hashes exist to determine how much new data they need and then they only request the data that currently is locally missing. 
 
 Finally, the difference between "Light", "Full" and "Mine" syncModes is what the final state will be: By choosing light you will end up with a light node, with full you will end up with a full node that does not try to solve block problems and with mine you will end up with a full node that does try to solve block problems. So the syncMode not only affects the behavior of the node during the initial sync phase but also the node behavior after having completed its initial sync.
 
