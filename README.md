@@ -21,6 +21,8 @@ Gophy is p2p command-line application written from scratch in Go to implement an
 
 * [Documentation](#documentation)
 
+* [Literature](#literature)
+
 * [Work in progress](#wip)
 
 * [Credits](#credits)
@@ -153,18 +155,26 @@ Finally, the difference between "Light", "Full" and "Mine" syncModes is what the
 
 <a name="usageExamples"/>
 
-## Contribution
-Gophy is in active developement and any form of feedback or improvement suggestions are welcome. If you have questions about the blockchain architecture itself you can ask in the [Discussions](https://github.com/felix314159/gophy/discussions) tab that was set up. If you want to help improve the code itself feel free to fork and send pull requests, but ensure to document your code with pkgsite-compatible comments so that the documentation can automatically stay up-to-date. You can also [report any issues](https://github.com/felix314159/gophy/issues) or concerns you might have.
-<a name="contribution"/>
-
 ## Documentation
 The code makes use of pkgsite-compatible comments used to automatically generate a documentation that can be accessed via the browser. In order to locally host the documentation read throught my [pkgsite tutorial](https://github.com/felix314159/gophy/blob/main/tutorials/pkgsite_documentation_tutorial.md). An online version of the documentation will also soon be available.
 
 The documentation contains more detailed information than this repository and should be used as a reference for users and developers. Not only does it make it easier to understand the existing codebase but it can also be utilized by users to learn more e.g. about differences between the different kinds of nodes gophy supports.
 <a name="documentation"/>
 
+## Literature
+For more information about Proof-of-Useful-Work and its challenges compared to traditional hash-based Proof-of-Work check out [Challenges of Proof-of-Useful-Work (PoUW)](https://ieeexplore.ieee.org/document/10087185).
+The blockchain architecture behind gophy is described in more detail in [this publication](https://arxiv.org/abs/2404.09093).
+The fair and transparent winner selection algorithm used for selecting block winners in gophy is described in more detail in [DFTWS](https://arxiv.org/abs/2312.01951).
+The most comprehensive description and analysis of gophy will be my dissertation that can be expected to be published late 2024/early 2025.
+<a name="literature"/>
+
+## Contribution
+Gophy is in active developement and any form of feedback or improvement suggestions are welcome. If you have questions about the blockchain architecture itself you can ask in the [Discussions](https://github.com/felix314159/gophy/discussions) tab that was set up. If you want to help improve the code itself feel free to fork and send pull requests, but ensure to document your code with pkgsite-compatible comments so that the documentation can automatically stay up-to-date. You can also [report any issues](https://github.com/felix314159/gophy/issues) or concerns you might have.
+<a name="contribution"/>
+
 ## WIP (Work in progress)
-todo
+Gophy still needs to be improved before being used in production. The following aspects could still be improved:
+* Libp2p-related: [Improve success rate of holepunching](https://discuss.libp2p.io/t/issue-with-holepunching-simple-example/2341). In certain networks gophy might not be able to receive PubSub messages from nodes in other networks, even though the node seems to be publicly available via tools like [libp2p-lookup](https://github.com/mxinden/libp2p-lookup) or [vole](https://github.com/ipfs-shipyard/vole).
 <a name="wip"/>
 
 ## Credits
