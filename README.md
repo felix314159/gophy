@@ -1,6 +1,8 @@
 # Gophy
 Gophy is p2p command-line application written from scratch in Go to implement and test ideas for a novel blockchain network that is based on the idea of useful work. Its goal is to provide anyone the ability to donate computational power to a real-world High Energy Physics (HEP) experiment by running Monte Carlo simulation tasks sent out by a privileged node called the Root Authority (RA). The RA is a node that will be run by a representative of the experiment to ensure the 'usefulness' aspect of tasks. Simplified, the RA sends out simulation tasks and receives the resulting data from miners. This data then is locally stored by the RA so that it can make use of it.
 
+Disclaimer: Gophy is still in active development and the raprivkey.key used here for demonstration purposes will not be used in production. Bugs or errors may occur and I am not liable for any damage that might be inflicted to your system by running this application.
+
 ## Table of Contents
 * [Features](#features)
 
