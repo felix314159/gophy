@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  <!-- Layout should adapt to screen size -->
+    <title>Submit Simtask</title>
+    <style>
+        input[type="text"] {
+            width: 500px;           /* Size of input fields */
+            margin-bottom: 20px;    /* Add a bit more vertical space between elements */
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            width: 500px;           /* Size of static text shown */
+        }
+        button {
+            align-self: flex-start; /* Sets button location */
+            margin-top: 10px;
+        }
+        .subproblem {
+            border: 1px solid #bbb; /* Display thin grey border around subproblems */
+            padding: 10px;
+            margin-bottom: 10px;
+            width: 508px;           /* Size of subproblem box (slightly larger looks better) */
+        }
+    </style>
+    <script>
+        let subproblemCount = 2;    // Keep track of subproblem count
+
+        // addField adds a new subproblem (label number increased by 1 so that later data of field can be retrieved easily)
+        function addField() {
+            const container = document.getElementById('eventFields');
+            const newField = document.createElement('div');
+            newField.classList.add('subproblem');
+            newField.setAttribute('id', `subproblem${subproblemCount}`);
+            newField.innerHTML = `
+                <h2>Subproblem ${subproblemCount}</h2>
+                <label for="amountEvents${subproblemCount}">Amount of Events (e.g. 5):</label>
+                <input type="text" id="amountEvents${subproblemCount}" name="amountEvents${subproblemCount}">
+                <label for="runID${subproblemCount}">Run ID (e.g. 1000):</label>
+                <input type="text" id="runID${subproblemCount}" name="runID${subproblemCount}">
+                <label for="particleID${subproblemCount}">Particle ID [0=pions, 1=eplus, 2=proton] (e.g. 2):</label>
+                <input type="text" id="particleID${subproblemCount}" name="particleID${subproblemCount}">
+                <label for="momentum${subproblemCount}">Momentum (e.g. 2.1):</label>
+                <input type="text" id="momentum${subproblemCount}" name="momentum${subproblemCount}">
+                <label for="theta${subproblemCount}">Theta (e.g. 0.0):</label>
+                <input type="text" id="theta${subproblemCount}" name="theta${subproblemCount}">
+                <button type="button" onclick="removeField('subproblem${subproblemCount}')">Remove Subproblem</button>
+            `;
+            container.appendChild(newField);
+            subproblemCount++;
+            updateRemoveButtons();
+        }
+
+        // removeField is called to remove a subproblem box
+        function removeField(id) {
+            const field = document.getElementById(id);
+            field.remove();
+            relabelSubproblems();   // after a subproblem has been deleted all remaining subproblems need to be relabeled (only redundant when last subproblem was deleted)
+            updateRemoveButtons();  // only show the 'remove subproblem' button if there are at least 2 subproblems shown currently
+        }
+
+        // relabelSubproblems updates the label (e.g. problem nr 5) after a subproblem has been deleted, this operation affects each field of that subproblem
+        function relabelSubproblems() {
+            const subproblems = document.querySelectorAll('.subproblem');
+            subproblems.forEach((subproblem, index) => {
+                const newIndex = index + 1;
+                subproblem.id = `subproblem${newIndex}`;
+                subproblem.querySelector('h2').innerText = `Subproblem ${newIndex}`;
+                subproblem.querySelector('label[for^="amountEvents"]').setAttribute('for', `amountEvents${newIndex}`);
+                subproblem.querySelector('input[id^="amountEvents"]').id = `amountEvents${newIndex}`;
+                subproblem.querySelector('input[name^="amountEvents"]').name = `amountEvents${newIndex}`;
+                subproblem.querySelector('label[for^="runID"]').setAttribute('for', `runID${newIndex}`);
+                subproblem.querySelector('input[id^="runID"]').id = `runID${newIndex}`;
+                subproblem.querySelector('input[name^="runID"]').name = `runID${newIndex}`;
+                subproblem.querySelector('label[for^="particleID"]').setAttribute('for', `particleID${newIndex}`);
+                subproblem.querySelector('input[id^="particleID"]').id = `particleID${newIndex}`;
+                subproblem.querySelector('input[name^="particleID"]').name = `particleID${newIndex}`;
+                subproblem.querySelector('label[for^="momentum"]').setAttribute('for', `momentum${newIndex}`);
+                subproblem.querySelector('input[id^="momentum"]').id = `momentum${newIndex}`;
+                subproblem.querySelector('input[name^="momentum"]').name = `momentum${newIndex}`;
+                subproblem.querySelector('label[for^="theta"]').setAttribute('for', `theta${newIndex}`);
+                subproblem.querySelector('input[id^="theta"]').id = `theta${newIndex}`;
+                subproblem.querySelector('input[name^="theta"]').name = `theta${newIndex}`;
+                subproblem.querySelector('button').setAttribute('onclick', `removeField('subproblem${newIndex}')`);
+            });
+            subproblemCount = subproblems.length + 1;
+        }
+
+        // updateRemoveButtons is used to only show the 'remove subproblem' button when there are at least 2 subproblems shown (sending simpar consisting of 0 subproblems is not allowed)
+        function updateRemoveButtons() {
+            const subproblems = document.querySelectorAll('.subproblem');
+            subproblems.forEach(subproblem => {
+                const removeButton = subproblem.querySelector('button');
+                removeButton.style.display = subproblems.length > 1 ? 'block' : 'none';
+            });
+        }
+
+        // confirmSubmit adds a confirmation dialogue to the 'Submit' button that the user has to confirm
+        function confirmSubmit(event) {
+            if (confirm("Do you really want to submit this simtask?")) {
+                handleSubmit(event);
+            }
+        }
+
+        // handleSubmit is used to send data to golang handler when submit button is pressed
+        // Note: Due to the confirmation dialogue of the submit button instead of referencing event.target you must now reference the simtaskForm specifically
+        async function handleSubmit(event) {
+            event.preventDefault();                             // Don't do default action (which seems to be displaying some JSON/Raw Data/ Headers overview in the browser)
+            
+            const form = document.getElementById('simtaskForm');// Get reference to the actual form
+            const formData = new FormData(form);
+            const url = form.action;
+
+            const urlParams = new URLSearchParams();                    // collect field input data
+            formData.forEach((value, key) => {
+                urlParams.append(key, value);
+            });
+            
+            const options = {
+                method: form.method,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded' // set correct content type (important)
+                },
+                body: urlParams.toString()                              // encode form data as string
+            };
+;
+            const response = await fetch(url, options);                 // wait for json response and display it
+            const result = await response.json();
+            document.getElementById('response').innerText = result.message;
+        }
+
+        // when website is loaded for the first time hide the 'remove subproblem' button (because at least 1 subproblem must always exist so don't allow removing it)
+        window.onload = function() {
+            updateRemoveButtons();
+        };
+        
+    </script>
+</head>
+<body>
+    <h1>Submit Simtask (RA only)</h1>
+    <form id="simtaskForm" action="/submitSimtask" method="post" onsubmit="handleSubmit(event)">
+        <div id="eventFields">
+            <div class="subproblem" id="subproblem1">
+                <h2>Subproblem 1</h2>
+                <label for="amountEvents1">Amount of Events (e.g. 5):</label>
+                <input type="text" id="amountEvents1" name="amountEvents1">
+                <label for="runID1">Run ID (e.g. 1000):</label>
+                <input type="text" id="runID1" name="runID1">
+                <label for="particleID1">Particle ID [0=pions, 1=eplus, 2=proton] (e.g. 2):</label>
+                <input type="text" id="particleID1" name="particleID1">
+                <label for="momentum1">Momentum (e.g. 2.1):</label>
+                <input type="text" id="momentum1" name="momentum1">
+                <label for="theta1">Theta (e.g. 0.0):</label>
+                <input type="text" id="theta1" name="theta1">
+                <button type="button" onclick="removeField('subproblem1')">Remove Subproblem</button>
+            </div>
+        </div>
+        <button type="button" onclick="addField()">Add Another Event</button>
+        <button type="button" onclick="confirmSubmit(event)">Submit</button>    <!-- Require confirmation to queue simtask -->
+    </form>
+    <p id="response"></p>
+</body>
+</html>

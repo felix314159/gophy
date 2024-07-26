@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	    <title>Performance Stats</title>
+	    <script>
+	        function fetchMessages() {
+	            fetch('/messages')
+	                .then(response => response.json())
+	                .then(data => {
+	                    const messageContainer = document.getElementById('messageContainer');
+	                    messageContainer.innerHTML = '';
+
+	                    // ensure data received is not empty
+	                    if (data && data.messages && Array.isArray(data.messages)) {
+	                        const messagesBySender = {};
+
+	                        // group messages by sender
+	                        data.messages.forEach(msg => {
+	                            if (!messagesBySender[msg.sender]) {
+	                                messagesBySender[msg.sender] = [];
+	                            }
+	                            messagesBySender[msg.sender].push(msg);
+	                        });
+
+	                        // always sort senders alphabetically ascending (so when sender b is shown at top and then unique sender a is added, a will be at the top)
+	                        const sortedSenders = Object.keys(messagesBySender).sort();
+
+	                        // each unique sender should have its stats displayed in aggregated form with horizontal dividers separating different senders
+	                        sortedSenders.forEach(sender => {
+	                            const senderContainer = document.createElement('div');
+	                            const senderTitle = document.createElement('h2');
+	                            senderTitle.textContent = 'Stats from node: ' + sender;
+	                            senderContainer.appendChild(senderTitle);
+
+	                            const ul = document.createElement('ul');
+	                            messagesBySender[sender].forEach(msg => {
+	                                const li = document.createElement('li');
+	                                li.textContent = 'Time: ' + msg.time + ', Event: ' + msg.eventtype + ', Message: ' + msg.message;
+	                                //li.textContent = 'Docker Alias: ' + msg.sender + ', Time: ' + msg.time + ', Event: ' + msg.eventtype + ', Message: ' + msg.message;
+	                                ul.appendChild(li);
+	                            });
+
+	                            senderContainer.appendChild(ul);
+	                            messageContainer.appendChild(senderContainer);
+
+	                            // add horizontal divider for better readability
+	                            const hr = document.createElement('hr');
+	                            messageContainer.appendChild(hr);
+	                        });
+	                    }
+	                })
+	                .catch(error => {
+	                    if (error.name !== 'TypeError') { // avoid spamming errors in dev console when server is not running anywork (NetworkError is a TypeError), but show all other errors
+	                        console.error('Error fetching messages:', error);
+	                    }
+	                });
+	        }
+
+	        // try to retrieve new stats every 200 ms
+	        setInterval(fetchMessages, 200);
+
+	        // retrieve stats when page loads
+	        window.onload = fetchMessages;
+	    </script>
+	    <link rel="shortcut icon" href="#"> <!--  Silence annoying favicon.ico error in dev tools -->
+	</head>
+
+	<body>
+	    <h1>Performance Stats</h1>
+	    <div id="messageContainer"></div>
+	</body>
+
+</html>
