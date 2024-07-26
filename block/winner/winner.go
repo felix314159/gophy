@@ -4,8 +4,8 @@ package winner
 import (
 	"math"
 
-	"example.org/gophy/logger"
-	"example.org/gophy/block/hash"
+	"github.com/felix314159/gophy/logger"
+	"github.com/felix314159/gophy/block/hash"
 )
 
 const (

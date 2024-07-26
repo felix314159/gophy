@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 	
-	"example.org/gophy/block/hash"
+	"github.com/felix314159/gophy/block/hash"
 )
 
 func TestWinner(t *testing.T) {

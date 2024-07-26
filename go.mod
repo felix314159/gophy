@@ -1,4 +1,4 @@
-module example.org/gophy
+module github.com/felix314159/gophy
 
 go 1.22.3
 
