@@ -57,7 +57,13 @@ Disclaimer: Gophy is still in active development and the raprivkey.key used here
 In order to build gophy you must install Golang. Follow official [Golang installation instructions](https://go.dev/doc/install) before continuing.
 <a name="building"/>
 ### Building gophy
-In order to statically build the gophy binary navigate to the root folder of this repo and then use one of the following commands depending on your OS:
+First download gophy using:
+* ```git clone https://github.com/felix314159/gophy.git```
+
+then navigate to the folder:
+* ```cd gophy```
+
+then in order to statically build the gophy binary use one of the following commands depending on your OS:
 * Windows:
 
     * ```CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build .```
