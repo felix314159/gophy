@@ -109,7 +109,7 @@ The following command-line flags are currently supported:
 | raMode | false | This flag is used to make the node behave as the Root Authority. This only works when you have access to the private key of the RA because each message sent must be signed and other nodes know the public key of the RA. |
 | raReset | false | This flag is used during testing/development to start the RA after resetting all blockchain data to genesis. |
 
-For more information about all possible values for each flag and their effects be sure to check out the documentation.
+You can also invoke gophy with ```./gophy --help``` to get a brief explanation of each flag. For more information about all possible values for each flag and their effects be sure to check out the documentation.
 <a name="flags"/>
 
 ### Dashboard
