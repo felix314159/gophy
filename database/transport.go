@@ -8,12 +8,12 @@ import (
 
 	"github.com/vmihailenco/msgpack/v5"
 
-	"example.org/gophy/block"
-	"example.org/gophy/block/hash"
-	"example.org/gophy/block/simpar"
-	"example.org/gophy/block/simsol"
-	"example.org/gophy/block/transaction"
-	"example.org/gophy/logger"
+	"github.com/felix314159/gophy/block"
+	"github.com/felix314159/gophy/block/hash"
+	"github.com/felix314159/gophy/block/simpar"
+	"github.com/felix314159/gophy/block/simsol"
+	"github.com/felix314159/gophy/block/transaction"
+	"github.com/felix314159/gophy/logger"
 )
 
 // TSData is an alias for int which describes which kind of data was put in a TransportStruct. It makes it easier for the receiving node to determine which data might have been sent.

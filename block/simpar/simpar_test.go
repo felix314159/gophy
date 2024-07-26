@@ -3,7 +3,7 @@ package simpar
 import (
 	"testing"
 
-	"example.org/gophy/block/hash"
+	"github.com/felix314159/gophy/block/hash"
 )
 
 func TestSimpar(t *testing.T) {

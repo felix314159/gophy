@@ -4,7 +4,7 @@ package hash
 import (
 	"encoding/hex"
 
-	"example.org/gophy/logger"
+	"github.com/felix314159/gophy/logger"
 	
 	"golang.org/x/crypto/sha3"
 )

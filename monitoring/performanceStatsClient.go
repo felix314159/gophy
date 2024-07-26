@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	"example.org/gophy/logger"
+	"github.com/felix314159/gophy/logger"
 )
 
 /* EXAMPLE USAGE:

@@ -3,10 +3,10 @@ package block
 import (
 	"testing"
 	
-	"example.org/gophy/block/hash"
-	"example.org/gophy/block/simpar"
-	"example.org/gophy/block/transaction"
-	"example.org/gophy/block/winner"
+	"github.com/felix314159/gophy/block/hash"
+	"github.com/felix314159/gophy/block/simpar"
+	"github.com/felix314159/gophy/block/transaction"
+	"github.com/felix314159/gophy/block/winner"
 )
 
 func TestBlock(t *testing.T) {

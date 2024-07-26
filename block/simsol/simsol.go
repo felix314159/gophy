@@ -8,8 +8,8 @@ import (
 
 	"github.com/vmihailenco/msgpack/v5"
 
-	"example.org/gophy/logger"
-	"example.org/gophy/block/hash"
+	"github.com/felix314159/gophy/logger"
+	"github.com/felix314159/gophy/block/hash"
 )
 
 // SimulationPath holds filepaths to the data that was created by running a simulation. Each subproblem solution has its own SimulationPath instance.

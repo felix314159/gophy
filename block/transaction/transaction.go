@@ -6,9 +6,9 @@ import (
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/vmihailenco/msgpack/v5"
 
-	"example.org/gophy/block/hash"
-	"example.org/gophy/logger"
-	"example.org/gophy/block/merkletree"
+	"github.com/felix314159/gophy/block/hash"
+	"github.com/felix314159/gophy/logger"
+	"github.com/felix314159/gophy/block/merkletree"
 )
 
 // Transaction contains fields such as From, TxTime, To, Value and txHash.

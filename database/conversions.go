@@ -14,12 +14,12 @@ import (
 
 	"github.com/vmihailenco/msgpack/v5"
 
-	"example.org/gophy/block"
-	"example.org/gophy/block/hash"
-	"example.org/gophy/block/simpar"
-	"example.org/gophy/block/simsol"
-	"example.org/gophy/block/transaction"
-	"example.org/gophy/logger"
+	"github.com/felix314159/gophy/block"
+	"github.com/felix314159/gophy/block/hash"
+	"github.com/felix314159/gophy/block/simpar"
+	"github.com/felix314159/gophy/block/simsol"
+	"github.com/felix314159/gophy/block/transaction"
+	"github.com/felix314159/gophy/logger"
 )
 
 // BytesToStringSlice unmarshals []byte to []string. It is used during networking to prepare to request each required block one-by-one.

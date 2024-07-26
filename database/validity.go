@@ -10,13 +10,13 @@ import (
 
 	"github.com/vmihailenco/msgpack/v5"
 
-	"example.org/gophy/block"
-	"example.org/gophy/block/hash"
-	"example.org/gophy/block/merkletree"
-	"example.org/gophy/block/simpar"
-	"example.org/gophy/block/transaction"
-	"example.org/gophy/block/winner"
-	"example.org/gophy/logger"
+	"github.com/felix314159/gophy/block"
+	"github.com/felix314159/gophy/block/hash"
+	"github.com/felix314159/gophy/block/merkletree"
+	"github.com/felix314159/gophy/block/simpar"
+	"github.com/felix314159/gophy/block/transaction"
+	"github.com/felix314159/gophy/block/winner"
+	"github.com/felix314159/gophy/logger"
 )
 
 // SimtaskValidityCheck takes a simulationTask (problem def) and the latest block header, and then determines whether this simTask is valid or not and returns err (only nil return means valid).

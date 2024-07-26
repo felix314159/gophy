@@ -9,9 +9,9 @@ import (
 
 	"github.com/vmihailenco/msgpack/v5"
 
-	"example.org/gophy/block/hash"
-	"example.org/gophy/block/simsol"
-	"example.org/gophy/logger"
+	"github.com/felix314159/gophy/block/hash"
+	"github.com/felix314159/gophy/block/simsol"
+	"github.com/felix314159/gophy/logger"
 )
 
 // Workflow:

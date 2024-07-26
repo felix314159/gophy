@@ -4,10 +4,10 @@ package block
 import (
 	"time"
 
-	"example.org/gophy/block/hash"
-	"example.org/gophy/block/simpar"
-	"example.org/gophy/block/transaction"
-	"example.org/gophy/block/winner"
+	"github.com/felix314159/gophy/block/hash"
+	"github.com/felix314159/gophy/block/simpar"
+	"github.com/felix314159/gophy/block/transaction"
+	"github.com/felix314159/gophy/block/winner"
 )
 
 // Header holds block metadata and is part of every block. Headers are equipped with Merkle tree root hash data so that light node protocols can exist.

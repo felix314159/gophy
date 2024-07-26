@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"example.org/gophy/block/simpar"
-	"example.org/gophy/database"
-	"example.org/gophy/logger"
+	"github.com/felix314159/gophy/block/simpar"
+	"github.com/felix314159/gophy/database"
+	"github.com/felix314159/gophy/logger"
 )
 
 // httpApiFolder holds the OS-agnostic path to the folder of httpapi

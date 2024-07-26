@@ -27,12 +27,12 @@ import (
 	"github.com/vmihailenco/msgpack/v5" // serialize / deserialization using msgpack
 	bolt "go.etcd.io/bbolt"             // database
 
-	"example.org/gophy/block"
-	"example.org/gophy/block/hash"
-	"example.org/gophy/block/merkletree"
-	//"example.org/gophy/block/simpar"
-	"example.org/gophy/block/transaction"
-	"example.org/gophy/logger"
+	"github.com/felix314159/gophy/block"
+	"github.com/felix314159/gophy/block/hash"
+	"github.com/felix314159/gophy/block/merkletree"
+	//"github.com/felix314159/gophy/block/simpar"
+	"github.com/felix314159/gophy/block/transaction"
+	"github.com/felix314159/gophy/logger"
 )
 
 func init() {

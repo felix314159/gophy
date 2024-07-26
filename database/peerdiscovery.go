@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 	
-	"example.org/gophy/logger"
-	"example.org/gophy/monitoring"
+	"github.com/felix314159/gophy/logger"
+	"github.com/felix314159/gophy/monitoring"
 
 	// libp2p stuff
 	dht "github.com/libp2p/go-libp2p-kad-dht"

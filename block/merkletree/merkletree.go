@@ -5,8 +5,8 @@ import (
 	"errors"
 	//"fmt"
 
-	"example.org/gophy/block/hash"
-	"example.org/gophy/logger"
+	"github.com/felix314159/gophy/block/hash"
+	"github.com/felix314159/gophy/logger"
 )
 
 // Node is a node in a tree. A node knows its left and right sibling and its parent node.

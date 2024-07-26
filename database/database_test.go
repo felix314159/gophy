@@ -12,8 +12,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/vmihailenco/msgpack/v5"
 
-	"example.org/gophy/block"
-	"example.org/gophy/block/hash"
+	"github.com/felix314159/gophy/block"
+	"github.com/felix314159/gophy/block/hash"
 )
 
 func TestDatabase(t *testing.T) {

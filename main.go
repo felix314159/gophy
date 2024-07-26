@@ -5,8 +5,8 @@ import (
 	"os/exec"
 	"runtime"
 
-	"example.org/gophy/database"
-	"example.org/gophy/logger"
+	"github.com/felix314159/gophy/database"
+	"github.com/felix314159/gophy/logger"
 
 	//		/*  this entire block is commented out when you want to use pseudo.go for getting large pseudo blockchain for testing
 	"context"
@@ -20,9 +20,9 @@ import (
 	"syscall"
 	"time"
 	
-	"example.org/gophy/block/simsol"
-	"example.org/gophy/httpapi"
-	"example.org/gophy/monitoring"
+	"github.com/felix314159/gophy/block/simsol"
+	"github.com/felix314159/gophy/httpapi"
+	"github.com/felix314159/gophy/monitoring"
 
 	// libp2p stuff
 	//connmgr "github.com/libp2p/go-libp2p/p2p/net/connmgr"

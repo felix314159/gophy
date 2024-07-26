@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"example.org/gophy/logger"
+	"github.com/felix314159/gophy/logger"
 )
 
 const serverPort = 12345
