@@ -144,8 +144,8 @@ Light node examples:
 ---
 
 Root Authority example:
-* Run your node as the Root Authority and start a new blockchain from scratch. Requires access to the file "raprivkey.key" and the password it was encrypted with:
-    *  ```./gophy -syncMode=SyncMode_Continuous_Full -localKeyFile=true -raMode=true -raReset=true -pw=thisisnottheactualrapw -dockerAlias=ra```
+* Run your node as the Root Authority and start a new blockchain from scratch. Requires access to the file "raprivkey.key" and the password it was encrypted with (provided here):
+    *  ```./gophy -syncMode=SyncMode_Continuous_Full -localKeyFile=true -raMode=true -raReset=true -pw=supersecretrapw -dockerAlias=ra```
 
 ---
 
