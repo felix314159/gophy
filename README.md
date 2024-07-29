@@ -63,6 +63,12 @@ First download gophy using:
 then navigate to the folder:
 * ```cd gophy```
 
+then create the go.mod file:
+* ```go mod init https://github.com/felix314159/gophy.git```
+
+then download dependencies:
+* ```go mod tidy```
+
 then in order to statically build the gophy binary use one of the following commands depending on your OS:
 * Windows:
 
