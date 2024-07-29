@@ -1,9 +1,7 @@
-Note: The following assumes that you have access to the private key of the Root Authority node (raprivkey.key).
-
 0. Build gophy binary statically linked (e.g. x86_64 and linux):
 * ```CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build .```
 
-1. Place resulting gophy binary in the docker folder of this repo. Also place key of Root Authority (raprivkey.key) in that folder.
+1. Place resulting gophy binary in the docker folder of this repo. Also place key of Root Authority (raprivkey.key) in that folder if it is not already there.
 
 2. Build image:
 * ```docker build -t gophyimage .```
