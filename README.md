@@ -32,6 +32,7 @@ Disclaimer: Gophy is still in active development and the raprivkey.key used here
 * [License](#license)
 
 ## Features
+<a name="features"/>
 * Cross-platform compatibility
     * Tested under Windows 11, macOS Ventura and Ubuntu. Gophy should be able run on any platform that supports Golang. 
 * Multiple kinds of nodes
@@ -51,12 +52,14 @@ Disclaimer: Gophy is still in active development and the raprivkey.key used here
     * It also provides a user-friendly way for the RA to broadcast a new block problem (simulation task) to the node network by visiting localhost:8087/send-simtask
 * HTTP API for monitoring multiple locally ran instances of gophy
     * When running many nodes on the same machine via e.g. Docker it is easy to get an overview of what each node is doing by visiting localhost:12345
-<a name="features"/>
+
 
 ## Build instructions
-In order to build gophy you must install Golang. Follow official [Golang installation instructions](https://go.dev/doc/install) before continuing.
 <a name="building"/>
+In order to build gophy you must install Golang. Follow official [Golang installation instructions](https://go.dev/doc/install) before continuing.
+
 ### Building gophy
+<a name="buildingGophy"/>
 First download gophy using:
 * ```git clone https://github.com/felix314159/gophy.git```
 
@@ -81,15 +84,16 @@ Note: If your CPU architecture is not x86_64 but instead ARM, set ```GOARCH=arm6
 
 These commands will create a binary called gophy in the current directory. It is recommended to statically build gophy so that it could also be run in a minimal scratch docker container.
 
-<a name="buildingGophy"/>
 
 ### Building cbmroot
+<a name="buildingCbmroot"/>
 This step is only necessary when you want to run a miner that actively works on simulation tasks and it can be skipped when you run gophy as a normal full or light node.
 
 [CbmRoot](https://git.cbm.gsi.de/computing/cbmroot) is the analysis and simulation framework used by the CBM experiment at FAIR in Darmstadt. In order to use cbmroot you first need to acquire required external software that is contained in the [FairSoft](https://github.com/FairRootGroup/FairSoft) repository. You can follow the linked official resources to build the software environment or if you are using Ubuntu 24.04 LTS you can also use my own [simplified instructions](https://github.com/felix314159/gophy/blob/main/tutorials/ubuntu24.04_cbmsoft-cbmroot_installationInstructions.pdf).
-<a name="buildingCbmroot"/>
+
 
 ## Docker setup
+<a name="docker"/>
 This section can be skipped for normal usage of gophy (there is no need to run it in Docker). However, it is recommended to use Docker when you want to run many nodes on the same machine.
 First install Docker Engine as describe in the [official instructions](https://docs.docker.com/engine/install/). Docker Desktop is not needed here, so just choose your OS from list of supported platforms and follow the instructions for Docker Engine. Then follow the [post-install instructions](https://docs.docker.com/engine/install/linux-postinstall/) so that you can run Docker without root privileges.
 
@@ -104,13 +108,14 @@ In order to run many gophy nodes locally to test their performance under control
     * ```docker stop $(docker ps -a -q)```
 
 More useful docker commands can be found in my [docker-tutorial](https://github.com/felix314159/gophy/blob/main/tutorials/docker-tutorial-linux-githubVersion.md). The sh script used was created to test syncing nodes from scratch under different networking conditions that are artificially introduced using tc-netem. For this reason, the script configures the nodes to fully reset and create a new identity each time they are started.
-<a name="docker"/>
+
 
 ## Usage / Running gophy
-This section goes into detail about which flags you can use to affect the behavior of gophy, how monitoring of multiple nodes works and provides gophy usage examples with explanations.
 <a name="usage"/>
+This section goes into detail about which flags you can use to affect the behavior of gophy, how monitoring of multiple nodes works and provides gophy usage examples with explanations.
 
 ### Flags
+<a name="flags"/>
 The following command-line flags are currently supported:
 | Flag    | Default value | Description |
 | -------- | ------- | ------- |
@@ -125,13 +130,14 @@ The following command-line flags are currently supported:
 | raReset | false | This flag is used during testing/development to start the RA after resetting all blockchain data to genesis. |
 
 You can also invoke gophy with ```./gophy -help``` to get a brief explanation of each flag. For more information about all possible values for each flag and their effects be sure to check out the documentation.
-<a name="flags"/>
+
 
 ### Dashboard
-A lightweight monitoring solution was written from scratch so that the activities of multiple nodes running e.g. via Docker can be easily observed. Gophy runs a simple HTTP server at localhost:12345 that locally run nodes send information about what they are currently doing to. The server is only started when it is not already running, so there is no issue when many nodes are started at once using Docker. The dashboard is viewed via the browser, updates in real-time and separates information of each node by their dockerAlias string. Each message sent by a node to the dashboard contains information about the current timestamp, what kind of event occurred (e.g. connected to new node) and a message field that can hold an arbitrary string to provide additional information.
 <a name="dashboard"/>
+A lightweight monitoring solution was written from scratch so that the activities of multiple nodes running e.g. via Docker can be easily observed. Gophy runs a simple HTTP server at localhost:12345 that locally run nodes send information about what they are currently doing to. The server is only started when it is not already running, so there is no issue when many nodes are started at once using Docker. The dashboard is viewed via the browser, updates in real-time and separates information of each node by their dockerAlias string. Each message sent by a node to the dashboard contains information about the current timestamp, what kind of event occurred (e.g. connected to new node) and a message field that can hold an arbitrary string to provide additional information.
 
 ### Usage examples
+<a name="usageExamples"/>
 Miner examples:
 * Create a new miner node identity and sync to the network for the first time. Then actively work on block problems to earn tokens (requires running node in cbmroot environment). Encrypt your identity file (private key) with a custom password:
     *  ```./gophy -syncMode=SyncMode_Initial_Mine -httpPort=8098 -dockerAlias=miner1 -pw=mysuperstrongpassword```
@@ -166,26 +172,28 @@ Generally, the "Initial" means that all local data is deleted to start a new nod
 
 Finally, the difference between "Light", "Full" and "Mine" syncModes is what the final state will be: By choosing light you will end up with a light node, with full you will end up with a full node that does not try to solve block problems and with mine you will end up with a full node that does try to solve block problems. So the syncMode not only affects the behavior of the node during the initial sync phase but also the node behavior after having completed its initial sync.
 
-<a name="usageExamples"/>
-
 ## Documentation
+<a name="documentation"/>
 The code makes use of pkgsite-compatible comments used to automatically generate a documentation that can be accessed via the browser. You can find the always up-to-date [online documentation here](https://pkg.go.dev/github.com/felix314159/gophy#section-directories).
 
 The documentation contains more detailed information than this repository and should be used as a reference for users and developers. Note: It is also possible to locally host the documentation on your machine, for a simplified guide read through my [pkgsite tutorial](https://github.com/felix314159/gophy/blob/main/tutorials/pkgsite_documentation_tutorial.md).
-<a name="documentation"/>
+
 
 ## Literature
+<a name="literature"/>
 For more information about Proof-of-Useful-Work and its challenges compared to traditional hash-based Proof-of-Work check out [Challenges of Proof-of-Useful-Work (PoUW)](https://ieeexplore.ieee.org/document/10087185).
 The blockchain architecture behind gophy is described in more detail in [this publication](https://arxiv.org/abs/2404.09093).
 The fair and transparent winner selection algorithm used for selecting block winners in gophy is described in more detail in [DFTWS](https://arxiv.org/abs/2312.01951).
 The most comprehensive description and analysis of gophy will be my dissertation that can be expected to be published late 2024/early 2025.
-<a name="literature"/>
+
 
 ## Contribution
-Gophy is in active developement and any form of feedback or improvement suggestions are welcome. If you have questions about the blockchain architecture itself you can ask in the [Discussions](https://github.com/felix314159/gophy/discussions) tab that was set up. If you want to help improve the code itself feel free to fork and send pull requests, but ensure to document your code with pkgsite-compatible comments so that the documentation can automatically stay up-to-date. You can also [report any issues](https://github.com/felix314159/gophy/issues) or concerns you might have.
 <a name="contribution"/>
+Gophy is in active developement and any form of feedback or improvement suggestions are welcome. If you have questions about the blockchain architecture itself you can ask in the [Discussions](https://github.com/felix314159/gophy/discussions) tab that was set up. If you want to help improve the code itself feel free to fork and send pull requests, but ensure to document your code with pkgsite-compatible comments so that the documentation can automatically stay up-to-date. You can also [report any issues](https://github.com/felix314159/gophy/issues) or concerns you might have.
+
 
 ## WIP (Work in progress)
+<a name="wip"/>
 Gophy still needs to be improved before being used in production. The following aspects could still be improved:
 * Libp2p-related: [Improve success rate of holepunching](https://discuss.libp2p.io/t/issue-with-holepunching-simple-example/2341). In certain networks gophy might not be able to receive PubSub messages from nodes in other networks, even though the node seems to be publicly available via tools like [libp2p-lookup](https://github.com/mxinden/libp2p-lookup) or [vole](https://github.com/ipfs-shipyard/vole).
 * Implement sub-solution matching as described in [this publication](https://arxiv.org/abs/2404.09093). The reason it currently is not implemented is more of a user interface problem: The RA needs an automated workflow that allows it, during the process of defining a set of new simulation tasks, to pre-calulate certain sub-solutions that will be used as decoy when probabilistically verifying the correctness of received solution data. It needs to be easy-to-use and highly automated to make it practical. Until it is implemented, the accepted solution will be chosen only by determining the most common solution of miners.
@@ -197,9 +205,10 @@ Gophy still needs to be improved before being used in production. The following 
 * Silence two known warnings:
     * ```websocket: failed to close network connection```: It is a harmless warning that comes from go-libp2p which does not negatively impact gophy but it would be nice to be able to silence it.
     * ```quic buffer size warning```: This warning is shown in some linux distros and does not negatively impact the performance of gophy. I already implemented an automated fix, however it requires root to perform and I do not think it is worth forcing root privileges just to silence a harmless warning.
-<a name="wip"/>
+
 
 ## Credits
+<a name="credits"/>
 I would like to thank FIAS and HFHF for supporting my work. I would also like to thank my professor who provided valuable feedback over time.
 
 Additionally, I want to give credits to the authors of the following Go packages, while I aimed to make use of Go's standard library or write my own code, in certain instances I relied on third-party code or on external packages that are developed outside of the Go core:
@@ -210,8 +219,9 @@ Additionally, I want to give credits to the authors of the following Go packages
   
 * [Crypto/SHA3](https://pkg.go.dev/golang.org/x/crypto/sha3) which is a Go implementation of SHA3 functions.
 * [Crypto/SSH](https://pkg.go.dev/golang.org/x/crypto/ssh) which contains functions to serialize Ed25519 and other kinds of keys into the widely supported OpenSSH format.
-<a name="credits"/>
+
 
 ## License
-Gophy is licensed under the MIT license. For more information see [MIT license](https://opensource.org/license/MIT).
 <a name="license"/>
+Gophy is licensed under the MIT license. For more information see [MIT license](https://opensource.org/license/MIT).
+
