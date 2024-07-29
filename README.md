@@ -57,7 +57,8 @@ Disclaimer: Gophy is still in active development and the raprivkey.key used here
 
 ## Build instructions
 <a name="building"/>
-</u>
+
+
 
 In order to build gophy you must install Golang. Follow official [Golang installation instructions](https://go.dev/doc/install) before continuing.
 
