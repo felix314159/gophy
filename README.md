@@ -32,7 +32,7 @@ Disclaimer: Gophy is still in active development and the raprivkey.key used here
 * [License](#license)
 
 ## Features
-<a name="features"/>
+<a id="features"></a>
 
 * Cross-platform compatibility
     * Tested under Windows 11, macOS Ventura and Ubuntu. Gophy should be able run on any platform that supports Golang. 
@@ -61,8 +61,7 @@ Disclaimer: Gophy is still in active development and the raprivkey.key used here
 In order to build gophy you must install Golang. Follow official [Golang installation instructions](https://go.dev/doc/install) before continuing.
 
 ### Building gophy
-<a name="buildingGophy"/>
-
+<a id="buildingGophy"></a>
 
 First download gophy using:
 * ```git clone https://github.com/felix314159/gophy.git```
