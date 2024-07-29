@@ -1,4 +1,4 @@
-// logger is used to log messages. The two main reasons to use this over fmt:
+// Package logger is used to log messages both to stdout and to a log file. The two main reasons to use this over fmt:
 //      - concurrency-safe (messages are shown in correct order which is not the case with fmt)
 //      - log to terminal and file at the same time across multiple goroutines (persistent logs are useful when so much output is printed that you can't scroll up all the way in the terminal)
 // Example Usage:
