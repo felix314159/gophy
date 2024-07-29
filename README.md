@@ -56,7 +56,7 @@ Disclaimer: Gophy is still in active development and the raprivkey.key used here
 
 
 ## Build instructions
-<a name="building"/>
+<a id="building"></a>
 
 In order to build gophy you must install Golang. Follow official [Golang installation instructions](https://go.dev/doc/install) before continuing.
 
@@ -89,7 +89,7 @@ These commands will create a binary called gophy in the current directory. It is
 
 
 ### Building cbmroot
-<a name="buildingCbmroot"/>
+<a id="buildingCbmroot"></a>
 
 This step is only necessary when you want to run a miner that actively works on simulation tasks and it can be skipped when you run gophy as a normal full or light node.
 
@@ -97,7 +97,7 @@ This step is only necessary when you want to run a miner that actively works on 
 
 
 ## Docker setup
-<a name="docker"/>
+<a id="docker"></a>
 
 This section can be skipped for normal usage of gophy (there is no need to run it in Docker). However, it is recommended to use Docker when you want to run many nodes on the same machine.
 First install Docker Engine as describe in the [official instructions](https://docs.docker.com/engine/install/). Docker Desktop is not needed here, so just choose your OS from list of supported platforms and follow the instructions for Docker Engine. Then follow the [post-install instructions](https://docs.docker.com/engine/install/linux-postinstall/) so that you can run Docker without root privileges.
@@ -116,12 +116,12 @@ More useful docker commands can be found in my [docker-tutorial](https://github.
 
 
 ## Usage / Running gophy
-<a name="usage"/>
+<a id="usage"></a>
 
 This section goes into detail about which flags you can use to affect the behavior of gophy, how monitoring of multiple nodes works and provides gophy usage examples with explanations.
 
 ### Flags
-<a name="flags"/>
+<a id="flags"></a>
 
 The following command-line flags are currently supported:
 | Flag    | Default value | Description |
@@ -140,12 +140,12 @@ You can also invoke gophy with ```./gophy -help``` to get a brief explanation of
 
 
 ### Dashboard
-<a name="dashboard"/>
+<a id="dashboard"></a>
 
 A lightweight monitoring solution was written from scratch so that the activities of multiple nodes running e.g. via Docker can be easily observed. Gophy runs a simple HTTP server at localhost:12345 that locally run nodes send information about what they are currently doing to. The server is only started when it is not already running, so there is no issue when many nodes are started at once using Docker. The dashboard is viewed via the browser, updates in real-time and separates information of each node by their dockerAlias string. Each message sent by a node to the dashboard contains information about the current timestamp, what kind of event occurred (e.g. connected to new node) and a message field that can hold an arbitrary string to provide additional information.
 
 ### Usage examples
-<a name="usageExamples"/>
+<a id="usageExamples"></a>
 
 Miner examples:
 * Create a new miner node identity and sync to the network for the first time. Then actively work on block problems to earn tokens (requires running node in cbmroot environment). Encrypt your identity file (private key) with a custom password:
@@ -182,7 +182,7 @@ Generally, the "Initial" means that all local data is deleted to start a new nod
 Finally, the difference between "Light", "Full" and "Mine" syncModes is what the final state will be: By choosing light you will end up with a light node, with full you will end up with a full node that does not try to solve block problems and with mine you will end up with a full node that does try to solve block problems. So the syncMode not only affects the behavior of the node during the initial sync phase but also the node behavior after having completed its initial sync.
 
 ## Documentation
-<a name="documentation"/>
+<a id="documentation"></a>
 
 The code makes use of pkgsite-compatible comments used to automatically generate a documentation that can be accessed via the browser. You can find the always up-to-date [online documentation here](https://pkg.go.dev/github.com/felix314159/gophy#section-directories).
 
@@ -190,7 +190,7 @@ The documentation contains more detailed information than this repository and sh
 
 
 ## Literature
-<a name="literature"/>
+<a id="literature"></a>
 
 For more information about Proof-of-Useful-Work and its challenges compared to traditional hash-based Proof-of-Work check out [Challenges of Proof-of-Useful-Work (PoUW)](https://ieeexplore.ieee.org/document/10087185).
 The blockchain architecture behind gophy is described in more detail in [this publication](https://arxiv.org/abs/2404.09093).
@@ -199,13 +199,13 @@ The most comprehensive description and analysis of gophy will be my dissertation
 
 
 ## Contribution
-<a name="contribution"/>
+<a id="contribution"></a>
 
 Gophy is in active developement and any form of feedback or improvement suggestions are welcome. If you have questions about the blockchain architecture itself you can ask in the [Discussions](https://github.com/felix314159/gophy/discussions) tab that was set up. If you want to help improve the code itself feel free to fork and send pull requests, but ensure to document your code with pkgsite-compatible comments so that the documentation can automatically stay up-to-date. You can also [report any issues](https://github.com/felix314159/gophy/issues) or concerns you might have.
 
 
 ## WIP (Work in progress)
-<a name="wip"/>
+<a id="wip"></a>
 
 Gophy still needs to be improved before being used in production. The following aspects could still be improved:
 * Libp2p-related: [Improve success rate of holepunching](https://discuss.libp2p.io/t/issue-with-holepunching-simple-example/2341). In certain networks gophy might not be able to receive PubSub messages from nodes in other networks, even though the node seems to be publicly available via tools like [libp2p-lookup](https://github.com/mxinden/libp2p-lookup) or [vole](https://github.com/ipfs-shipyard/vole).
@@ -221,7 +221,7 @@ Gophy still needs to be improved before being used in production. The following 
 
 
 ## Credits
-<a name="credits"/>
+<a id="credits"></a>
 
 I would like to thank FIAS and HFHF for supporting my work. I would also like to thank my professor who provided valuable feedback over time.
 
@@ -236,6 +236,7 @@ Additionally, I want to give credits to the authors of the following Go packages
 
 
 ## License
-<a name="license"/>
+<a id="license"></a>
+
 Gophy is licensed under the MIT license. For more information see [MIT license](https://opensource.org/license/MIT).
 
