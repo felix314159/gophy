@@ -166,9 +166,9 @@ Finally, the difference between "Light", "Full" and "Mine" syncModes is what the
 <a name="usageExamples"/>
 
 ## Documentation
-The code makes use of pkgsite-compatible comments used to automatically generate a documentation that can be accessed via the browser. In order to locally host the documentation read throught my [pkgsite tutorial](https://github.com/felix314159/gophy/blob/main/tutorials/pkgsite_documentation_tutorial.md). An online version of the documentation will also soon be available.
+The code makes use of pkgsite-compatible comments used to automatically generate a documentation that can be accessed via the browser. You can find the always up-to-date [online documentation here](https://pkg.go.dev/github.com/felix314159/gophy#section-directories).
 
-The documentation contains more detailed information than this repository and should be used as a reference for users and developers. Not only does it make it easier to understand the existing codebase but it can also be utilized by users to learn more e.g. about differences between the different kinds of nodes gophy supports.
+The documentation contains more detailed information than this repository and should be used as a reference for users and developers. Note: It is also possible to locally host the documentation on your machine, for a simplified guide read through my [pkgsite tutorial](https://github.com/felix314159/gophy/blob/main/tutorials/pkgsite_documentation_tutorial.md).
 <a name="documentation"/>
 
 ## Literature
