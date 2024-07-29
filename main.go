@@ -138,16 +138,16 @@ func main() {
 
 	// ensure prerequisites for being a miner are met
 	if (curNodeMode == database.SyncMode_Continuous_Mine) || (curNodeMode == database.SyncMode_Initial_Mine) {
-		// if miner: check if fairroot env is available
 		// 		1. ensure user is running linux or macOS (fairrot does not support windows)
 		if (runtime.GOOS != "linux") && (runtime.GOOS != "darwin") {
 			logger.L.Panicf("You try to be a miner but you are not running an OS that supports FairSoft. Please try running this code on linux or macOS. Terminating.")
 			return
 		}
-		//		2. ensure querying LD_LIBRARY_PATH return a string that contains the substring 'fair' (at some point find more robust solution)
-		ldLibraryPath := os.Getenv("LD_LIBRARY_PATH")
-		if  !strings.Contains(ldLibraryPath, "fair") {
-			logger.L.Panicf("You try to be a miner but querying LD_LIBRARY_PATH does not show any indication of fairsoft. Terminating.\nNote: If this is a false positive comment out this check.")
+		//		2. if miner: check if PATH env variable contains substring 'fair' or 'sim' (at some point find more robust solution)
+		pathEnvContent := os.Getenv("PATH")
+		pathEnvContent = strings.ToLower(pathEnvContent)
+		if  !(strings.Contains(pathEnvContent, "sim") || strings.Contains(pathEnvContent, "fair")) {
+			logger.L.Panicf("You try to be a miner but querying PATH does not show any indication of fairsoft. Terminating.\nNote: If this is a false positive comment out this check or ensure that you have followed the fairroot tutorial I provided.")
 			return
 		}
 		
