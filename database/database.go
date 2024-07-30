@@ -1081,6 +1081,10 @@ func PrintBlock(b block.Block) {
 	for tIndex, t := range b.Transactions {
 		logger.L.Printf("Transaction %v:\nFrom: %v\nTxTime: %v\nTo: %v\nValue: %v\nReference: %v\nTxHash: %v\nSignature: %v\nNonce: %v\nFee: %v\n\n", tIndex, t.From, t.TxTime, t.To, t.Value, t.Reference, t.TxHash.GetString(), hex.EncodeToString(t.Sig), t.Nonce, t.Fee)
 	}
+
+	// print simtask metadata (not actual parameters to reduce amount of text output)
+	logger.L.Printf("SimTask Metadata:\n\tProblemHash: %v\n\tCreationTime: %v\n\tExpirationTime: %v\n\tBlockID: %v\n\tAmountSubProblems: %v\n\tRACommit: %v\n\n", b.SimulationTask.ProblemHash.GetString(), b.SimulationTask.SimHeader.CreationTime, b.SimulationTask.SimHeader.ExpirationTime, b.SimulationTask.SimHeader.BlockID, b.SimulationTask.SimHeader.AmountSubProblems, b.SimulationTask.SimHeader.RAcommit.Bytes) // print ra commit as bytes because it might not be visible symbols anyways
+
 }
 
 // PrintSerializedStringSliceBlockHashes takes a serialized slice of strings, and prints its content after deserialization.

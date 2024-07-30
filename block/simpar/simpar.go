@@ -138,12 +138,7 @@ func (s SimulationTask) PrintSimTask() {
 var RunSimMutex sync.Mutex
 
 // RunSimulation takes a SimulationParameters object, runs the simulation and returns the serialized block problem solution (which contains all subproblem solutions) and an error.
-// The simulation can only be run if the code is run in the CBM environment (and my code has only been tested on Ubuntu CBM).
-// Note: In order to be able to use root in cbm env run 'nano ~/.profile', then add the following lines if they don't exist already:
-//          export PATH="$HOME/fairsoft_apr21p2_root6/installation/bin:$PATH"
-//			source "$HOME/fairroot_v18.6.7-fairsoft_apr21p2_root6/bin/FairRootConfig.sh"
-//			export PATH=$PATH:/usr/local/go/bin
-//       then reboot. Typing 'root' in bash should now work.
+// Note: The simulation can only be run if the code is run in the CBM environment. In order to be able to use root in cbm env ensure you have followed the cbmroot tutorial in this repo.
 func (s SimulationTask) RunSimulation() ([]byte, hash.Hash, error) {
 	RunSimMutex.Lock()
 	defer RunSimMutex.Unlock()
