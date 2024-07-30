@@ -205,8 +205,9 @@ func RunServer() {
     
     // run websites as a goroutine
     go func() {
-        // Will panic if there are issues such as e.g. trying to run multiple instances of this pool using the same port, ensure that in these cases you use the port flag to explicitely set a different, unused port
-        panic(http.ListenAndServe(fmt.Sprintf("localhost:%v", database.HttpPort), nil))  // run server on localhost=loopback interface (important to use localhost instead of your IP address so that website is only available from this machine, otherwise everyone on local network could e.g. send transactions via your wallet)
+        // will print warning if there are issues such as e.g. trying to run multiple instances of this pool using the same port, ensure that in these cases you use the port flag to explicitely set a different, unused port
+        err := http.ListenAndServe(fmt.Sprintf("localhost:%v", database.HttpPort), nil) // run server on loopback interface (important so that website is only available from this machine, otherwise everyone on local network could e.g. send transactions via your wallet)
+        fmt.Printf("RunServer - Warning: %v\n", err)  
     }()
 
     //select{} // don't terminate the server (only needed when server is run as standalone program and main would terminate)
