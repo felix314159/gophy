@@ -185,6 +185,8 @@ func (s *SyncHelperStruct) MapAdd(data []byte, mapKey string, senderNodeIDstring
 			ConfirmationsCur	int
 			Data				[]byte
 		}{ConfirmationsCur: 1, Data: data}
+
+		logger.L.Printf("Added hash of received blockhash StringSlice to SyncHelper map.")
 	}
 }
 
@@ -1100,8 +1102,6 @@ func HandleIncomingChatMessage(chatStream network.Stream, h host.Host, ctx conte
 			// add the marshaled []byte data to the map of the SyncHelper
 			SyncHelper.MapAdd(recData, recDataHash, senderNodeID)
 
-			logger.L.Printf("Added hash of received blockhash StringSlice to SyncHelper map.")
-		
 		}
 	}
 
