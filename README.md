@@ -3,6 +3,8 @@ Gophy is p2p command-line application written from scratch in Go to implement an
 
 Disclaimer: Gophy is still in active development and the raprivkey.key used here for demonstration purposes will not be used in production. Bugs or errors may occur and I am not liable for any damage that might be inflicted to your system by running this application. Before running this application for testing purposes, change the RendezvousString in constants.go to any string of your choice (to separate your test network from others), create a new raprivkey (I wrote [this Go script](https://github.com/felix314159/libp2p-mineNodeID) to make this easier) and replace the existing raprivkey from the root folder and from the docker folder with the new key. Finally, update the value RANodeID in constant.go with the new RA node ID. These steps ensure that your tests are not affected by someone using the publicly known example RA privkey. 
 
+![alt text](https://github.com/felix314159/gophy/blob/main/tutorials/exampleOutput/gophyExampleOutput.png?raw=true "Gophy Example Output")
+
 ## Table of Contents
 * [Features](#features)
 
