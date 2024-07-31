@@ -51,9 +51,10 @@ Disclaimer: Gophy is still in active development and the raprivkey.key used here
 * HTTP API for sending transactions and new simulation tasks (default port 8087 can be overwritten via flag)
     * Gophy runs a local http server which provides a user-friendly way for nodes to broadcast transactions by visiting localhost:8087/send-transaction
     * It also provides a user-friendly way for the RA to broadcast a new block problem (simulation task) to the node network by visiting localhost:8087/send-simtask
-* HTTP API for monitoring multiple locally ran instances of gophy
-    * When running many nodes on the same machine via e.g. Docker it is easy to get an overview of what each node is doing by visiting localhost:12345
-
+* Self-built monitoring solution to observe many locally ran instances of gophy
+    * When running many nodes on the same machine via e.g. Docker you can get an overview of what each node is doing by visiting localhost:12345
+* For developers: functions to rapidly simulate blockchain growth over time
+    * Pseudo.go contains functions that can be used to generate a valid blockchain of specified size (e.g. 200 blocks with each block containing 30 transactions) to observe not only how the size of the blockchain itself grows over time but also to be able to test the sync between nodes with a large blockchain from the start. In order to be able to generate valid transactions, the currently published version of gophy contains a pre-allocation of 30k tokens for the RA. This ensures that the RA is able to 'send' many pseudo-randomly transactions in pseudo.go so that the generated blocks are valid.
 
 ## Build instructions
 <a id="building"></a>
