@@ -4,6 +4,7 @@ package database
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -155,8 +156,41 @@ func TopicNewBlockReceiveEvent(m pubsub.Message, h host.Host, ctx context.Contex
 	//			0.1 RA has revealed its secret bytes
 	raCommitSec := BlockProblemHelper.GetRAcommitSecret()
 	if raCommitSec == "" {
-		logger.L.Panicf("I received a block from RA but I had not yet received the raCommitSecret! This means I can't verify whether RA acts according to the rules which makes me panic!")
+		logger.L.Printf("I received a block from RA but I had not yet received the raCommitSecret! Since the received block also contains the raSecret I can recover from this situation..\n")
+		
+		// extract raCommit from received block
+		recBlockFull := FullBlockBytesToBlock(recData)
+		
+		// ensure it has expected length
+		raCommitSec = recBlockFull.SimulationTask.SimHeader.RAcommit.GetString()
+
+		// these secret bytes can never be less than 7 chars, so panic if sth unexpected occurrs (later performance stat reporting assumes the first 7 chars of this exist)
+		// 7 was arbitrarily chosen, a bit like Github allows you to specify a commit by just giving the first 7 hex chars of the commit hash
+		if len(raCommitSec) < 7 {
+			logger.L.Panicf("Received secret RA commit bytes but they are too short! Expected sth longer than 7 chars but got: %v\nI will panic!", raCommitSec)
+		}
+
+		BlockProblemHelper.SetRAcommitSecret(raCommitSec)
+
+		// ---
+
+		// report performance stat that the RA secretBytes commitment was received (Event RACommitRevealed)
+		// 		get current time
+		curTimeRightNow := time.Now().UnixNano()
+		// 		msgRAcommit should only show first 7 chars (otherwise it's the longest reported message and might lead to ugly linebreaks)
+		msgRAcommit := fmt.Sprintf("RA Commit Reveal (first 7 chars): %v", raCommitSec[:7])
+		//		construct stat to be sent
+		pStat := monitoring.NewPerformanceData(curTimeRightNow, MyDockerAlias, monitoring.Event_RACommitRevealed, msgRAcommit)
+		// 		post stat
+		err = monitoring.SendPerformanceStatWithRetries(pStat)
+		if err != nil {
+			logger.L.Printf("Warning - Failed to report performance stat: %v", err)
+		}
+
+		// ---
+
 	}
+
 	//			0.2 Current block problem must have expired
 	currentTime := block.GetCurrentTime()
 	expirationTime := BlockProblemHelper.GetProblemExpirationTime()
