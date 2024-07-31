@@ -224,7 +224,7 @@ func main() {
 	// configure SyncHelper
 	database.SyncHelper = database.SyncHelperStruct {
 		NodeMode:			curNodeMode,
-		ConfirmationsReq:	1,
+		ConfirmationsReq:	1, // during development this should be 1, but in production (when new nodes try to join an existing network) this value should be increased. it defines how many response confirmations from different nodes have to be received during inital sync until the response is accepted. a higher value should be more secure
 		Data:				make(map[string]struct {
 								ConfirmationsCur	int
 								Data				[]byte
