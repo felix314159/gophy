@@ -4,7 +4,6 @@ package database
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"time"
 
