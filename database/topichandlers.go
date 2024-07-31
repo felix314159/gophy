@@ -702,7 +702,7 @@ func TopicNewCommitmentReceiveEvent(m pubsub.Message, h host.Host, ctx context.C
 	// 		get current time
 	curTimeRightNow := time.Now().UnixNano()
 	//		get hash of hash of solution data (kinda zero knowledge)
-	msg := fmt.Sprintf("Committed to H(H(sol)): %v", recCommitment.HashCommit.GetString())
+	msg := fmt.Sprintf("Node %v committed to H(H(sol)) (first 7 chars): %v", recCommitment.OriginalSenderNodeID, recCommitment.HashCommit.GetString()[:7])
 	//		construct stat to be sent
 	pStat := monitoring.NewPerformanceData(curTimeRightNow, MyDockerAlias, monitoring.Event_MinerCommitReceived, msg)
 	// 		post stat
