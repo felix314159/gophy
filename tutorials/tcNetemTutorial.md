@@ -11,10 +11,10 @@
 	* rate (limit egress traffic to simulate limited bandwidth)
 
 * Show current tc netem setting [replace lo with whatever inferface you care about]:
-	* tc qdisc show dev lo
+	* ``` tc qdisc show dev lo ```
 
 * Remove effects (revert to normal) [replace lo with whatever inferface you have affected]:
-	* sudo tc qdisc del dev lo root netem
+	* ``` sudo tc qdisc del dev lo root netem ```
 
 ---
 
