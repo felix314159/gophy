@@ -289,9 +289,9 @@ func TopicNewBlockReceiveEvent(m pubsub.Message, h host.Host, ctx context.Contex
 	}
 
 	if IAmFullNode {
-		logger.L.Printf("New block from RA has successfully been added to chaindb and it has affected statedb.")
+		logger.L.Printf("New block from RA with hash %v has successfully been added to chaindb and it has affected statedb.\n", recBlockHashString)
 	} else {
-		logger.L.Printf("New header from RA has successfully been added to chaindb.")
+		logger.L.Printf("New header from RA with hash %v has successfully been added to chaindb.\n", recBlockHashString)
 	}
 
 	// --- 
