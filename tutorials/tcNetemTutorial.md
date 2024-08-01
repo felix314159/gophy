@@ -27,49 +27,51 @@ Note 2: I added 'limit 10000' to all commands because the default of 1000 is a b
 Example Scenarios:
 
 * 100% packet loss:
-	* sudo tc qdisc replace dev lo root netem loss 100% limit 10000
+	* ``` sudo tc qdisc replace dev lo root netem loss 100% limit 10000 ```
 
 * 5% Loss + ca. 100 ms (+- 10ms) delay [jitter + biasing]:
-	* sudo tc qdisc replace dev lo root netem loss 5% delay 100ms 10ms 25% limit 10000
+	* ``` sudo tc qdisc replace dev lo root netem loss 5% delay 100ms 10ms 25% limit 10000 ```
 
 * around 100 ms delay + 20% corruption: 
-	* sudo tc qdisc replace dev lo root netem delay 100ms 10ms 25% corrupt 20% limit 10000
+	* ``` sudo tc qdisc replace dev lo root netem delay 100ms 10ms 25% corrupt 20% limit 10000 ```
 
 * 5% Loss + around 100 ms delay + 20% corruption + 8% duplicate: 
-	* sudo tc qdisc replace dev lo root netem loss 5% delay 100ms 10ms 25% corrupt 20% duplicate 8% limit 10000
+	* ``` sudo tc qdisc replace dev lo root netem loss 5% delay 100ms 10ms 25% corrupt 20% duplicate 8% limit 10000 ```
 
 * 5% Loss + around 100 ms delay + 20% corruption + 8% duplicate + bandwith limited to 1Mbit: 
-	* sudo tc qdisc replace dev lo root netem loss 5% delay 100ms 10ms 25% corrupt 20% duplicate 8% rate 1Mbit limit 10000
+	* ``` sudo tc qdisc replace dev lo root netem loss 5% delay 100ms 10ms 25% corrupt 20% duplicate 8% rate 1Mbit limit 10000 ```
 
 * reordering of packets method 1 [by using delay]:
-	* sudo tc qdisc replace dev lo root netem gap 3 delay 100ms
+	* ``` sudo tc qdisc replace dev lo root netem gap 3 delay 100ms ```
 	* Explanation: every 3rd packet is sent instantly, the first two are delayed which means there will be re-ordering
 
 * reordering of packets method 2 [by using probability]:
-	* sudo tc qdisc replace dev lo root netem delay 100ms 10ms 25% reorder 80%
+	* ``` sudo tc qdisc replace dev lo root netem delay 100ms 10ms 25% reorder 80% ```
 	* Explanation: 80% of packets are sent instantly, 100-80=20% are delayed which affects ordering
 
 ----
 
 Note 3: 'replace' has an odd behavior in combination with 'reorder' that I don't understand. Example:
 * Run these commands:
-	* sudo tc qdisc replace dev lo root netem loss 5% delay 100ms 10ms 25% limit 10000
-	* sudo tc qdisc replace dev lo root netem loss 100% limit 10000
-	* tc qdisc show dev lo
+	* ``` sudo tc qdisc replace dev lo root netem loss 5% delay 100ms 10ms 25% limit 10000 ```
+	* ``` sudo tc qdisc replace dev lo root netem loss 100% limit 10000 ```
+	* ``` tc qdisc show dev lo ```
 
 * Now you see the every setting from the first command is gone and only loss and limit are still there. But when you do:
 
-	* sudo tc qdisc del dev lo root netem
-	* sudo tc qdisc replace dev lo root netem loss 5% delay 100ms 10ms 25% limit 10000 reorder 80%
-	* sudo tc qdisc replace dev lo root netem loss 100% limit 10000
-	* tc qdisc show dev lo
+	* ``` sudo tc qdisc del dev lo root netem ```
+	* ``` sudo tc qdisc replace dev lo root netem loss 5% delay 100ms 10ms 25% limit 10000 reorder 80% ```
+	* ``` sudo tc qdisc replace dev lo root netem loss 100% limit 10000 ```
+	* ``` tc qdisc show dev lo ```
 
 * Then you can see the reorder also survived when it shouldn't have. Is this a bug or a feature?
 
 ---
 
 Relevant for Docker nodes: In the runNodes.sh I am using host networking so there is nothing to do, but when you use bridge networking then you must add:
-	--cap-add=NET_ADMIN
+
+* ``` --cap-add=NET_ADMIN ``` 
+
 otherwise you would not be able to use tc netem for each node separately. I also think in that case you should not be using a scratch image because getting
 tc netem to work in scratch probably requires further work.
 
