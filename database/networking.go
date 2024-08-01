@@ -1185,47 +1185,30 @@ func RandomShortSleep() {
 // Returns true if the data is of interest, returns false if the data should be ignored.
 func AmIInterestedInThisDirectChatData(syncMode Mode, recDataType TSData) bool {
 	switch syncMode {
-	// Initial_Full and Initial_Mine only cares about []string and block.Block
-	case SyncMode_Initial_Full, SyncMode_Initial_Mine:
+	// Passive modes do not accept incoming direct chat data at all
+	case SyncMode_Passive_Full, SyncMode_Passive_Light:
+		return false
+
+	// Initial_Full, SyncMode_Continuous_Full, Initial_Mine and SyncMode_Continuous_Mine only care about []string and block.Block
+	case SyncMode_Initial_Full, SyncMode_Continuous_Full, SyncMode_Initial_Mine, SyncMode_Continuous_Mine:
 		if (recDataType != TSData_StringSlice) && (recDataType != TSData_Block) {
 			return false
 		} else {
 			return true
 		}
-	// Initial_Light only cares about []string and block.Header
-	case SyncMode_Initial_Light:
+	// Initial_Light and  Continuous_Light only care about []string and block.Header
+	case SyncMode_Initial_Light, SyncMode_Continuous_Light:
 		if (recDataType != TSData_StringSlice) && (recDataType != TSData_Header) {
 			return false
 		} else {
 			return true
 		}
-	// Continuous_Full only cares about block.Block
-	case SyncMode_Continuous_Full:
-		if recDataType != TSData_Block {
-			return false
-		} else {
-			return true
-		}
-	// Continuous_Light only cares about block.Header
-	case SyncMode_Continuous_Light:
-		if recDataType != TSData_Header {
-			return false
-		} else {
-			return true
-		}
-	// Continuous_Full only cares about block.Block and simpar.SimulationTask
-	case SyncMode_Continuous_Mine:
-		if (recDataType != TSData_Block) && (recDataType != TSData_SimulationTask) {
-			return false
-		} else {
-			return true
-		}
+
 	default:
 		logger.L.Printf("AmIInterestedInThisDirectChatData - Default case: I do not seem to be interested in this data")
 		return false
 	}
 
-	// SyncModes Passive_Light/Full do not have to be handled here as this check already happened at an earlier stage.
 }
 
 // WinnerSelection takes a slice of elgible miners and the RAcommitSecret and then performs the winner selection after the block problem has expired and RA has published its secretCommitBytes.
