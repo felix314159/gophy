@@ -126,6 +126,9 @@ var PubsubTopicSlice = []*pubsub.Topic{}
 // didReceiveLiveData is used to keep track of whether live data was correctly received from RA (default: false)
 var didReceiveLiveData bool
 
+// initialSyncChaindbDataWasReceivedAlready is used so that when a new block is received while you are still waiting for live data from RA, it can be decided whether you are able to handle the new block or not (you need to know the previous block to be able to check the validity)
+var initialSyncChaindbDataWasReceivedAlready bool
+
 // OriginalMode stores the initial mode a node was in at startup. It's used to determine the final sync mode after the initial sync is completed.
 var OriginalMode Mode 
 

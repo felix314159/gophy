@@ -376,6 +376,9 @@ func SyncNode(ctx context.Context, h host.Host) {
 		logger.L.Printf("There was no need to change any local data as I already was up-to-date.")
 	}
 
+	// remember that you received all chaindb data so that you are from now on able to handle incoming blocks via the topic
+	initialSyncChaindbDataWasReceivedAlready = true
+
 	// ---- Phase 3: Initial Sync: Verify validity ----
 
 	// change nodemode to Passive (declines incoming connections) [avoids db locks while intensive task is going on]

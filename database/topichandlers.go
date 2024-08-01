@@ -113,12 +113,15 @@ func TopicReceiveMessage(ctx context.Context, sub *pubsub.Subscription, h host.H
 // The topic is used by the RA to send out new chaindb blocks to the network. Nodes will ignore any message sent to this topic,
 // if its signature is not that of the RA.
 func TopicNewBlockReceiveEvent(m pubsub.Message, h host.Host, ctx context.Context) {
-	// while in Initial you ignore these topic messages (as you are not in sync yet so there is no way to stay in sync)
-	curSyncMode := SyncHelper.NodeModeGet()
-	if  (curSyncMode == SyncMode_Initial_Full) || (curSyncMode == SyncMode_Initial_Light) || (curSyncMode == SyncMode_Initial_Mine){
+	// if you have not already received all necessary chaindb from your initial sync you will not be able to determine the validity of the new block
+	if !initialSyncChaindbDataWasReceivedAlready {
+		logger.L.Printf("TopicNewBlockReceiveEvent - I still have not gotten all chaindb data from my initial sync, that's why I will ignore this new block.")
 		return
 	}
-
+	if !didReceiveLiveData {
+		logger.L.Printf("TopicNewBlockReceiveEvent - I am still waiting for LiveData but since I already have all chaindb data I will be able to handle this incoming block.")
+	}
+	
 	// ----
 
 	// determine nodeID of sender (might or might not be the ORIGINAL sender)
