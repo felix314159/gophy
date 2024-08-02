@@ -193,14 +193,18 @@ func TopicNewBlockReceiveEvent(m pubsub.Message, h host.Host, ctx context.Contex
 
 	}
 
-	//			0.2 Current block problem must have expired
-	currentTime := block.GetCurrentTime()
-	expirationTime := BlockProblemHelper.GetProblemExpirationTime()
-	currentProblemID := BlockProblemHelper.GetProblemID().GetString()
-	if currentTime < expirationTime {
-		logger.L.Panicf("I received a block from RA but the current block problem has not expired yet! Current time is %v and active problem with ID %v will expire at %v which is in the future. I will panic!", currentTime, currentProblemID, expirationTime) 
+	//		0.2 Current block problem must have expired (these checks can only be performed if live data has already been received)
+	if didReceiveLiveData {
+		currentTime := block.GetCurrentTime()
+		expirationTime := BlockProblemHelper.GetProblemExpirationTime()
+		currentProblemID := BlockProblemHelper.GetProblemID().GetString()
+		if currentTime < expirationTime {
+			logger.L.Panicf("I received a block from RA but the current block problem has not expired yet! Current time is %v and active problem with ID %v will expire at %v which is in the future. I will panic!", currentTime, currentProblemID, expirationTime) 
+		}
+	} else {
+		logger.L.Printf("Skipped check whether current block problem has actually expired because I did not receive LiveData yet.")
 	}
-
+	
 	// 1. determine which solutionHash was accepted by RA
 	//		deserialize data into block
 	recBlockFull := FullBlockBytesToBlock(recData)
