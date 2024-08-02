@@ -50,6 +50,7 @@ Disclaimer: Gophy is still in active development and the raprivkey.key used here
     * Encrypted communication channels can be used for secure communication between nodes, see [Noise](https://docs.libp2p.io/concepts/secure-comm/noise/) for more information.
 * Novel blockchain architecture
     * In order to guarantee the usefulness of simulation tasks, a privileged node called the Root Authority (RA) define and send out new block problems in regular intervals. The RA is supposed to be controlled by a representative of the HEP experiment that profits from the simulation data the network generates. To mitigate some undeseriable side-affects of an increased degree of centralization, the blockchain architecture is designed in a way that nodes can control the RA which limits its power. However, it must be noted that in its current form the RA is both a necesssary evil (to preserve usefulness of tasks) and a single point of failure (no more block problems = no more blocks).
+    * Gophy also features a novel winner selection algorithm named DFTWS. Theoretical details about DFTWS are explained [here](https://arxiv.org/abs/2312.01951) and a code repository to analyze its fairness can be found [here](https://github.com/felix314159/dftws-fairnessEvaluation).
 * HTTP API for sending transactions and new simulation tasks (default port 8087 can be overwritten via flag)
     * Gophy runs a local http server which provides a user-friendly way for nodes to broadcast transactions by visiting localhost:8087/send-transaction
     * It also provides a user-friendly way for the RA to broadcast a new block problem (simulation task) to the node network by visiting localhost:8087/send-simtask
@@ -197,7 +198,7 @@ The documentation contains more detailed information than this repository and sh
 
 For more information about Proof-of-Useful-Work and its challenges compared to traditional hash-based Proof-of-Work check out [Challenges of Proof-of-Useful-Work (PoUW)](https://ieeexplore.ieee.org/document/10087185).
 The blockchain architecture behind gophy is described in more detail in [this publication](https://arxiv.org/abs/2404.09093).
-The fair and transparent winner selection algorithm used for selecting block winners in gophy is described in more detail in [DFTWS](https://arxiv.org/abs/2312.01951).
+The fair and transparent winner selection algorithm used for selecting block winners in gophy is described in more detail in [DFTWS](https://arxiv.org/abs/2312.01951). Code to analyze the fairness of DFTWS can be found [here](https://github.com/felix314159/dftws-fairnessEvaluation).
 The most comprehensive description and analysis of gophy will be my dissertation that can be expected to be published late 2024/early 2025.
 
 
