@@ -35,7 +35,7 @@ import (
 	//		*/
 )
 
-const version = "0.9.15" // increase with each github commit
+const version = "v0.9.16-alpha"
 
 // RA Node ID:	 12D3KooWEYSb69dzeojEH1PygPWef9V1qQJqrGKUEMMsbA4keAyZ
 
