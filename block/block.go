@@ -23,13 +23,11 @@ type Header struct {
 
 // Block holds blockchain data and is serialized and stored in the chaindb bucket of the database. A full node will store the entire block, will a light node will only store the header of the block.
 type Block struct {
-	// header (full node + light node)
+	// header (stored by full node + light node)
 	BlockHeader				Header						// header being a struct makes serialization (with light node support) easier
 
-	// full node only
+	// stored by full node only
 	Transactions			[]transaction.Transaction	// list of transactions
-	//ProblemHeader			simpar.SimulationHeader
-	//ProblemDef				simpar.SimulationParameters
 	SimulationTask 			simpar.SimulationTask
 }
 
