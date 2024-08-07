@@ -71,7 +71,7 @@ func main() {
 	
 	if *dumpFlag == "nil" {
 		// separate different executions in the log, also list used flags
-		logger.L.Printf("---- STARTING EXECUTION (version %v) ----\nFlag values used:\n\ttopicNames: %v\n\tsyncMode: %v\n\traMode: %v\n\traReset: %v\n\tlocalKeyFile: %v\n\thttpPort: %v\n\tdump: %v", version, *topicNamesFlag, *syncModeFlag, *raFlag, *raResetFlag, *localKeyFileFlag, *httpPortFlag, *dumpFlag) // never log the password
+		logger.L.Printf("---- STARTING EXECUTION (version %v) ----\nFlag values used:\n\ttopicNames: %v\n\tsyncMode: %v\n\traMode: %v\n\traReset: %v\n\tlocalKeyFile: %v\n\thttpPort: %v\n\tdockerAlias: %v\n\tdump: %v", version, *topicNamesFlag, *syncModeFlag, *raFlag, *raResetFlag, *localKeyFileFlag, *httpPortFlag, *dockerAliasFlag, *dumpFlag) // never log the password
 	}
 	
 	// ---- Handle flags ----
