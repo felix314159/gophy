@@ -524,7 +524,7 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 				logger.L.Printf(sKey)
 			}
 
-			return fmt.Errorf("BlockVerifyValidity - Block invalid because its stateMerkleTreeRootHash is invalid! Expected %v but block has %v \n", stateMerkleTree.GetRootHash().GetString(), newBlock.BlockHeader.StateMerkleRoot.GetString())
+			return fmt.Errorf("BlockVerifyValidity - Block with ID %v is invalid because its stateMerkleTreeRootHash is invalid! Expected %v but block has %v \n", newBlock.BlockHeader.BlockID, stateMerkleTree.GetRootHash().GetString(), newBlock.BlockHeader.StateMerkleRoot.GetString())
 		}
 
 	}
