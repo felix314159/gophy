@@ -1100,3 +1100,32 @@ func PrintSerializedStringSliceBlockHashes(receivedMessage []byte) {
 		}
 	}
 }
+
+// PrintStateDB gets all keys from the statedb, retrieves the corresponding values (wallets) and prints their info.
+func PrintStateDB() {
+	stateKeys := BoltGetDbKeys("statedb")
+	for _, walletKey := range stateKeys {
+		logger.L.Printf("Retrieving data for statedb key '%v'\n", walletKey)
+
+		// retrieve data
+		walletBytes, err := ReadFromBucket(walletKey, "statedb")
+		if err != nil {
+			logger.L.Panic(err)
+		}
+
+		// deserialize data
+		wallet, err := StateDbBytesToStruct(walletBytes)
+		if err != nil {
+			logger.L.Panic(err)
+		}
+
+		// print wallet info
+		PrintStateDbWallet(wallet, walletKey)
+
+	}
+}
+
+// PrintStateDbWallet takes a StateValueStruct and prints it.
+func PrintStateDbWallet(w StateValueStruct, keyValue string) {
+	logger.L.Printf("\nWallet of %v:\n\tBalance: %v\n\tNonce: %v\n----\n", keyValue, w.Balance, w.Nonce)
+}

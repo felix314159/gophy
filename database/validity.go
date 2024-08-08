@@ -139,7 +139,7 @@ func BlockchainVerifyValidity(fullNode bool, measurePerformance bool) error {
 	startTime := time.Now() // will be updated with each iteration
 
 	// now check validity of all other blocks
-	for blockIndex, blockKey := range blockHashStringListAsc[1:] { // genesis can be skipped at it was already checked
+	for _, blockKey := range blockHashStringListAsc[1:] { // genesis can be skipped at it was already checked
 		// get block from db
 		newBlockBytes, err := BlockGetBytesFromDb(blockKey)
 		if err != nil {
@@ -147,15 +147,12 @@ func BlockchainVerifyValidity(fullNode bool, measurePerformance bool) error {
 		}
 		// unmarshal
 		var newBlock block.Block
-		//var newHeader block.Header
 		if fullNode {
 			newBlock = FullBlockBytesToBlock(newBlockBytes)
-		} //else {
-			//newHeader, _ = HeaderBytesToBlockLight(newBlockBytes)
-		//}
+		}
 		
 		// checks validity of new block (can new block be valid continuation of previous block)
-		err = BlockVerifyValidity(fullNode, prevBlockBytes, newBlockBytes, false)
+		err = BlockVerifyValidity(fullNode, prevBlockBytes, newBlockBytes, fullNode)
 		if err != nil {
 			// display block that makes problems
 			if fullNode {
@@ -189,11 +186,7 @@ func BlockchainVerifyValidity(fullNode bool, measurePerformance bool) error {
 		timeTakenPerBlockInMS = append(timeTakenPerBlockInMS, elapsedTimeInMicroSeconds)
 		// reset clock for next iteration
 		startTime = time.Now() 
-		// print stats if bool is toggled on (these prints affects measurement time)
-		//if measurePerformance {
-		//	logger.L.Printf("Verifying block %v took %v microseconds.", blockIndex, elapsedTimeInMicroSeconds)
-		//}
-		_ = blockIndex // silence unused
+
 
 	}
 
@@ -518,11 +511,9 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 		// 	7. State merkle tree after processing block matches blockheader value
 		stateMerkleTree := merkletree.NewMerkleTree(nodeIDListAfterTrans)
 		if stateMerkleTree.GetRootHash().GetString() != newBlock.BlockHeader.StateMerkleRoot.GetString() {
-			// debug: print statedb keys
-			logger.L.Printf("State db keys ascending:")
-			for _, sKey := range nodeIDsAscending {
-				logger.L.Printf(sKey)
-			}
+			// debug: print statedb 
+			logger.L.Printf("BlockVerifyValidity - There is an issue with the statedb, here is a full dump of it:")
+			PrintStateDB()
 
 			return fmt.Errorf("BlockVerifyValidity - Block with ID %v is invalid because its stateMerkleTreeRootHash is invalid! Expected %v but block has %v \n", newBlock.BlockHeader.BlockID, stateMerkleTree.GetRootHash().GetString(), newBlock.BlockHeader.StateMerkleRoot.GetString())
 		}

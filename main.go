@@ -65,11 +65,12 @@ func main() {
 	dockerAliasFlag := flag.String("dockerAlias", "mynode", "Sets the name of the docker instance that runs this node. Useful for having performance stats recording where Sender of a stat can easily by identified via its docker alias.")
 	// flags that do something locally and exit
 	dumpFlag := flag.String("dump", "nil", "Takes provided blockHash or 'latest' string and retrieves the block from local chaindb. Then prints its header if the block was available.")
+	dumpStateFlag := flag.Bool("dumpState", false, "Prints all wallet information (nonce and token balance of all accounts in statedb. Light nodes can not use this flag because they do not locally store the state. This function takes precendence over the chaindb dump, so only use one at a time.")
 
 	// ---- Parse flags ----
 	flag.Parse()
 	
-	if *dumpFlag == "nil" {
+	if *dumpFlag == "nil" && !(*dumpStateFlag) {
 		// separate different executions in the log, also list used flags
 		logger.L.Printf("---- STARTING EXECUTION (version %v) ----\nFlag values used:\n\ttopicNames: %v\n\tsyncMode: %v\n\traMode: %v\n\traReset: %v\n\tlocalKeyFile: %v\n\thttpPort: %v\n\tdockerAlias: %v\n\tdump: %v", version, *topicNamesFlag, *syncModeFlag, *raFlag, *raResetFlag, *localKeyFileFlag, *httpPortFlag, *dockerAliasFlag, *dumpFlag) // never log the password
 	}
@@ -84,7 +85,7 @@ func main() {
 	}
 
 	// warn user if default password 'insecurepassword' (just useful for running many docker nodes at once) [do not warn if user is just dumping some data]
-	if *pwFlag == "insecurepassword" && *dumpFlag == "nil" {
+	if *pwFlag == "insecurepassword" && *dumpFlag == "nil" && !(*dumpStateFlag) {
 		logger.L.Printf("WARNING - You are using the default password, this is allowed but not recommended.") // even if you re-use your key and that key uses the default password, you will get reminded every time. this is intended
 	}
 
@@ -163,6 +164,16 @@ func main() {
 		logger.L.Printf("I am a full node.")
 	} else if !database.IAmFullNode && (*dumpFlag == "nil") {
 		logger.L.Printf("I am a light node.")
+	}
+
+	// handle dumpState flag
+	if *dumpStateFlag {
+		if !database.IAmFullNode {
+			logger.L.Printf("You tried to dump the state but you are a light node! This is not possible, terminating..\n")
+			return
+		}
+		database.PrintStateDB()
+		return
 	}
 
 	// handle dump flag (must be handled first to avoid db reset in case the default syncmode is initial)
@@ -518,7 +529,7 @@ func main() {
 	// logger.L.Printf("Created light blockchain.")
 
 
-	// err := database.CreatePseudoBlockchainFull(10, "supersecretrapw", 20)								
+	// err := database.CreatePseudoBlockchainFull(1, "supersecretrapw", 1)								
 	// if err != nil {
 	// 	logger.L.Panic(err)
 	// }

@@ -127,7 +127,7 @@ func CreatePseudoBlockchainFull(blockAmount int, RApw string, transactionAmountP
 	}
 	logger.L.Printf("Size of blockchain is %v bytes", dbFileInfo.Size())
 
-	// this function does not call blockchainverifyvalidity() because that function assumes the current database state is only one block away from the next state. but when calling it here the db state would be the one you would get after having processed ALL blocks already, so it logically is not compatible
+	// you can not call BlockchainVerifyValidity here because it calls BlockVerifyValidity and that function assumes the newest block just came in and has not affected the statedb yet. But here all blocks already have affected the statedb so the pseudo logic is not compatible with this function.
 
 	return nil
 
