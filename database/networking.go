@@ -276,7 +276,6 @@ func SyncNode(ctx context.Context, h host.Host) {
 	bHReqTS := NewTransportStruct(TSData_ChainDBRequest, MyNodeIDString, bHReqSer)
 
 	// 4. repeatedly keep requesting blockHeaders every 10 seconds until enough responses have been collected
-	var acceptedData []byte
 	acceptedDataChannel := make(chan []byte)
     go waitForData(acceptedDataChannel)
 
@@ -284,7 +283,7 @@ func SyncNode(ctx context.Context, h host.Host) {
     ticker := time.NewTicker(10 * time.Second)
 
     done := make(chan bool)
-    go func() {
+    acceptedData := func() []byte {
         for {
             select {
             case <-ticker.C: // ticker.C is used to perform an action in regular intervals (here 10 seconds), action is send request again
@@ -295,11 +294,11 @@ func SyncNode(ctx context.Context, h host.Host) {
 					RandomShortSleep()
 					err = TopicSendMessage(ctx, "pouw_chaindb", bHReqTS)
 				}
-            case acceptedData = <-acceptedDataChannel:
+            case acceptedData := <-acceptedDataChannel:
                 logger.L.Printf("Verified blockheaders have been received.")
                 ticker.Stop() // goal was achieved, no need for further ticks
                 done <- true
-                return
+                return acceptedData
             }
         }
     }()
@@ -309,6 +308,9 @@ func SyncNode(ctx context.Context, h host.Host) {
 
 	// now that the list of all blockHashes is known, unmarshal the received data into []string
 	acceptedDataStringSlice := BytesToStringSlice(acceptedData)
+
+	// ensure that there are no duplicates in the string slice
+	acceptedDataStringSlice = RemoveDuplicateStrings(acceptedDataStringSlice)
 
 	// now check if any data locally is missing [panic means either local node is corrupted/flawed or current majority of nodes we communicated with is malicious]
 	needTheseBlockHashesStringSlice, err := DetermineLocallyMissingBlockHashes(acceptedDataStringSlice, IAmFullNode)
@@ -1202,6 +1204,22 @@ func RandomShortSleep() {
 
 	// sleep this many milliseconds (you also need to cast int to time.Duration)
 	time.Sleep(time.Duration(randInt) * time.Millisecond)
+}
+
+// RemoveDuplicateStrings removes duplicate strings from []string and return the cleansed slice that does not contain any duplicates.
+func RemoveDuplicateStrings(ss []string) []string {
+	seenAlready := make(map[string]bool)
+	var sliceWithoutDuplicates []string
+
+	for _, s := range ss {
+		// add this string to the map if it was not seen before, in this case also add it to sliceWithoutDuplicates
+		if _, ok := seenAlready[s]; !ok {
+			seenAlready[s] = true
+			sliceWithoutDuplicates = append(sliceWithoutDuplicates, s)
+		}
+	}
+
+	return sliceWithoutDuplicates
 }
 
 // AmIInterestedInThisDirectChatData checks whether a node in a given sync mode is interested of received data of a given type.
