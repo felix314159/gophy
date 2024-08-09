@@ -35,7 +35,7 @@ import (
 	//		*/
 )
 
-const version = "v0.9.16-alpha"
+const version = "v0.9.17-alpha"
 
 // RA Node ID:	 12D3KooWEYSb69dzeojEH1PygPWef9V1qQJqrGKUEMMsbA4keAyZ
 
@@ -529,7 +529,7 @@ func main() {
 	// logger.L.Printf("Created light blockchain.")
 
 
-	// err := database.CreatePseudoBlockchainFull(1, "supersecretrapw", 1)								
+	// err := database.CreatePseudoBlockchainFull(10, "supersecretrapw", 20)								
 	// if err != nil {
 	// 	logger.L.Panic(err)
 	// }

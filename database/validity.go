@@ -94,8 +94,9 @@ func SimtaskValidityCheck(s simpar.SimulationTask, h block.Header) error {
 }
 
 
-// BlockchainVerifyValidity goes through every block in the local blockchain and ensures that all data (chaindb + statedb) are valid by calling the helper function BlockVerifyValidity().
-// Being valid means that the chain of blocks abides to certain rules (block ID + 1, timestamp <=, ...) and that the statedb was affected according to the data found in chaindb blocks.
+// BlockchainVerifyValidity goes through every block in the local blockchain and ensures that the chaindb data is valid.
+// It then tries to locally build the statedb from the given chaindb data, this means calling BlockchainVerifyValidity() does affect the state!
+// Note: Blocks being 'valid' means that the chain of blocks abides to certain rules (block ID + 1, timestamp <=, ...) and that the statedb was affected according to the data found in chaindb blocks.
 // Return an error that is only nil when the blockchain is valid, otherwise returns an error that describes why the blockchain is not valid.
 func BlockchainVerifyValidity(fullNode bool, measurePerformance bool) error {
 	// get list of all chaindb block hashes (starting with block id 0, 1, 2...)
@@ -162,7 +163,7 @@ func BlockchainVerifyValidity(fullNode bool, measurePerformance bool) error {
 			return fmt.Errorf("BlockchainVerifyValidity - %v\n", err)
 		}
 
-		// ---- block is valid so full nodes will now affect their state ----
+		// ---- block is valid, full nodes will now affect their state ----
 
 		if fullNode {
 			newBlockAfterAffected, err := StateDbProcessAndUpdateBlock(newBlock)

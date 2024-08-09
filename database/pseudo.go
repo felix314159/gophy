@@ -31,13 +31,15 @@ import (
 
 // CreatePseudoBlockchainFull is a helper testing function which creates a few example block.Block and adds them to pouw_blockchain.db.
 // This function affects both the chaindb bucket and the statedb bucket.
-// This function takes two parameters: Firstly the amount of blocks to be created, secondly the key password of the RA so that valid transactions can be created.
+// This function takes two parameters: Firstly the amount of blocks to be created, secondly the key password of the RA so that valid transactions can be created. If you pass 1 for the amount of blocks you will get genesis + one additional block, so 2 blocks in total (genesis is not counted in what is passed by the user).
 func CreatePseudoBlockchainFull(blockAmount int, RApw string, transactionAmountPerBlock int) error {
 	if (blockAmount < 1) || (blockAmount > 1000) {	// less than 1k blocks guarantees RA has enough funds to perform 3 transactions per block a 10 tokens
 		return fmt.Errorf("CreatePseudoBlockchainFull - Invalid parameter given. Must be in [1,1000]")
 	}
 
 	IAmRA = true // you must set this to true so that empty simdb bucket is created, so that RA will be able to use this (non-RA nodes don't mind the empty bucket but RA can't use this without it)
+
+	blockAmount += 1 // when user says e.g. 'create 5 blocks' then he probably means genesis + 5 additional blocks, so add 1 here for the genesis block
 
 	// ---- Reset blockchain and initialize genesis ----
 	ResetAndInitializeGenesis(true)
@@ -127,7 +129,7 @@ func CreatePseudoBlockchainFull(blockAmount int, RApw string, transactionAmountP
 	}
 	logger.L.Printf("Size of blockchain is %v bytes", dbFileInfo.Size())
 
-	// you can not call BlockchainVerifyValidity here because it calls BlockVerifyValidity and that function assumes the newest block just came in and has not affected the statedb yet. But here all blocks already have affected the statedb so the pseudo logic is not compatible with this function.
+	// you can not call BlockchainVerifyValidity here because it would affect the state, but you already have the current state when using pseudo.
 
 	return nil
 

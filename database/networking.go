@@ -316,13 +316,7 @@ func SyncNode(ctx context.Context, h host.Host) {
 		logger.L.Panicf("SyncNode - Accepted data has been compared with local state but failed: %v\nPlease re-sync your node.", err)
 	}
 	
-	// reset acceptedData
-	acceptedData = nil
-	
-	// map has already been reset by wait goroutine
-	
-	// set ConfirmationsReq to 1 (no matter what they were before) because now the correct hashes are known
-	SyncHelper.ConfirmationsReqWrite(1)
+
 
 	// ---- Phase 2: Initial Sync: Get blocks/headers ----
 	
@@ -331,10 +325,14 @@ func SyncNode(ctx context.Context, h host.Host) {
 	} else {
 		logger.L.Printf("Will now request headers.")
 	}
-	
+
+	// set ConfirmationsReq to 1 (no matter what they were before) because now the correct hashes are known
+	SyncHelper.ConfirmationsReqWrite(1)
+
 	// request each block / header one-by-one (ascending by ID) [includes genesis block]
 	//		technically like above you could also repeat this action in a loop until you actually received all data, but I found so far that's not necessary, when someone replied to you above it means you should be well-connected to the network which means you should get responses, so far no need for request loop
 	for _, blockHashString := range needTheseBlockHashesStringSlice {
+		
 		// request block or header
 		//		1. create ChainDBRequest instance
 		chaindbReq := NewChainDBRequest(MyNodeIDString, false, IAmFullNode, false, blockHashString)
@@ -345,25 +343,43 @@ func SyncNode(ctx context.Context, h host.Host) {
 		}
 		// 		3. wrap in TS
 		haindbReqTS := NewTransportStruct(TSData_ChainDBRequest, MyNodeIDString, chaindbReqSer)
-		//		4. send to topic
-		err = TopicSendMessage(ctx, "pouw_chaindb", haindbReqTS)
-		for err != nil {
-			logger.L.Printf("Failed to send topic message: %v\nWill try again..\n", err)
-			RandomShortSleep()
-			err = TopicSendMessage(ctx, "pouw_chaindb", haindbReqTS)
-		}
-
-		// wait until its received ConfirmationsReq amount times and then stored in recData
-		go waitForCorrectBlockData(blockHashString, acceptedDataChannel)	// unbuffered channel is empty again because we already read from it
-		recData := <-acceptedDataChannel	// recData is of type []byte
-		logger.L.Printf("Received verified block data.")
 		
-		// Note: it does not check whether block was signed by RA, because when a node stores the block in its database it does not remember
-		// who originally signed the message (only during the process it checks whether the sender node signature is valid, but that only means
-		// that the sender node does not impersonate another node, it does not guarantee that the block sent was signed by RA). 
-		// maybe at some point, at a sig field to the blockheader and the block is only accepted if it is signed by RA
+		// ---- Request data and wait until it has been received once (ConfirmationsReq was set to 1), hash of good data is already known here ----
 
-		// write data to chaindb
+		// reset channel related data types
+		acceptedData = []byte{}
+		acceptedDataChannel = make(chan []byte)
+		done = make(chan bool)
+
+		// wait until data of interest has been received
+	    go waitForDataWithHash(blockHashString, acceptedDataChannel)
+
+	    // 		request interval: 10 sec (if after 10 sec the data of interest has not been received, request it again)
+	    ticker := time.NewTicker(10 * time.Second)
+
+	    recData := func() []byte {
+	        for {
+	            select {
+	            case <-ticker.C:
+	                // send request for this piece of block data, repeat if it fails
+	                err := TopicSendMessage(ctx, "pouw_chaindb", haindbReqTS)
+	                for err != nil {
+						logger.L.Printf("Failed to send topic message: %v\nWill try again..\n", err)
+						RandomShortSleep()
+						err = TopicSendMessage(ctx, "pouw_chaindb", haindbReqTS)
+					}
+				// as soon as data with correct hash has been received stop requesting this piece of data and move on to the next block / header of interest
+	            case acceptedData = <-acceptedDataChannel:
+	                logger.L.Printf("Received data for block with hash %v.", blockHashString)
+	                ticker.Stop()
+	                done <- true
+	                return acceptedData
+	            }
+	        }
+	    }()
+	    <-done
+
+		// write data of this block to chaindb
 		err = BlockWriteToDb(recData, IAmFullNode)
 		if err != nil {
 			logger.L.Panicf("Failed to write block data to database: %v", err)
@@ -372,8 +388,10 @@ func SyncNode(ctx context.Context, h host.Host) {
 		
 	}
 
-	if len(needTheseBlockHashesStringSlice) == 0 {
-		logger.L.Printf("There was no need to change any local data as I already was up-to-date.")
+	// ---- Ok so all block data has been received now ----
+
+	if len(needTheseBlockHashesStringSlice) == 0 { // in this case the entire block above would have been skipped anyways, it's just to inform the continuous sync user that it was already up-to-date
+		logger.L.Printf("There was no need to request any block data because I already was up-to-date.")
 	}
 
 	// remember that you received all chaindb data so that you are from now on able to handle incoming blocks via the topic
@@ -391,7 +409,7 @@ func SyncNode(ctx context.Context, h host.Host) {
 	
 	err = BlockchainVerifyValidity(IAmFullNode, false) // also affects statedb
 	if err != nil {
-		logger.L.Panicf("Chaindb or statedb is NOT valid. It is recommend that you restart with -reset=true parameter! Error: %v", err)
+		logger.L.Panicf("Chaindb or statedb is NOT valid. It is recommended that you restart with -reset=true parameter! Error: %v", err)
 	} 
 	
 	logger.L.Printf("\nSuccessfully verfied validity of chaindb and statedb.\n")
@@ -1126,13 +1144,14 @@ func waitForData(acceptedDataChannel chan []byte) {
     }
 }
 
-// waitForCorrectBlockData keeps checking whether a requested piece of data has been received often enough.
-func waitForCorrectBlockData(expectedBlockHashString string, acceptedDataChannel chan []byte) {
+// waitForDataWithHash keeps checking whether a requested piece of data has been received yet. When received, it returns that data via the the []byte channel acceptedDataChannel.
+func waitForDataWithHash(expectedBlockHashString string, acceptedDataChannel chan []byte) {
     for {
+    	// only 1 confirmation needed when you already know which hash you need
 		confirmationsReached, data, hashString := SyncHelper.MapCheckIfConfirmationsReached()
 		// ok we received block data
         if confirmationsReached {
-			// ok these are the droids we are looking for
+			// check if the received data has the required hash
 			if hashString == expectedBlockHashString {
 				SyncHelper.MapReset()		// reset the map to prepare next data request process
 				acceptedDataChannel <- data	// return []byte
@@ -1145,6 +1164,7 @@ func waitForCorrectBlockData(expectedBlockHashString string, acceptedDataChannel
 		time.Sleep(20 * time.Millisecond)	// checking too often is problematic cuz of mutex locking, so short timeout needed
     }
 }
+
 
 // waitForCommitment repeatedly checks whether a valid commitment of a specified miner address has successfully been received for a given problem.
 // Returns true if valid commitment is found in time, return false when the current block problem changes before a valid commitment was received.
