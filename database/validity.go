@@ -141,6 +141,8 @@ func BlockchainVerifyValidity(fullNode bool, measurePerformance bool) error {
 
 	// now check validity of all other blocks
 	for _, blockKey := range blockHashStringListAsc[1:] { // genesis can be skipped at it was already checked
+		logger.L.Printf("Will now check validity of block with hash %v\n", blockKey)
+
 		// get block from db
 		newBlockBytes, err := BlockGetBytesFromDb(blockKey)
 		if err != nil {
@@ -220,6 +222,7 @@ func BlockchainVerifyValidity(fullNode bool, measurePerformance bool) error {
 //		1. PrevBlockHash of new is equal to blockHash of prev
 // 		2. Block ID increased by 1
 //		3. Timestamp larger
+//		3.5 Token reward was calculated correctly according to formula
 //		4. Transaction Signatures are valid [full node only]
 //		5. Transaction list merkle tree roothash was calculated correctly [full node only]
 // 		6. All transactions are valid check [full node only]
@@ -278,6 +281,12 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 		return fmt.Errorf("BlockVerifyValidity - Validity check failed: Timestamp of new block is not larger than previous block. Expected timestamp larger than %v but got timestamp %v", prevBlockHeader.BlockTime, newBlock.BlockHeader.BlockTime)
 	}
 	
+	// 3.5 Token amount that is awarded to block winner has been calculated correctly
+	correctReward := winner.GetTokenRewardForBlock(newBlockHeader.BlockID)
+	if newBlock.BlockHeader.BlockWinner.TokenReward != correctReward {
+		return fmt.Errorf("BlockVerifyValidity - Validity check failed: Wrong reward for block winner! Expected award to be %v tokens but got %v tokens.", correctReward, newBlock.BlockHeader.BlockWinner.TokenReward)
+	}
+
 	// ---- Validity checks that do not depend on the previous block (and which just so happen to be only possible done by full nodes) ----
 
 	// full nodes will have to perform more tests than light nodes:
@@ -318,8 +327,8 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 
 		// 6.1 Read database into memory so that after all the tests in-memory can be compared to actual state
 		// 		6.1.0 create nodeid->StateValueStruct mapping
-		stateAccountList := make(map[string]StateValueStruct) // StateValueStruct has two fields: 'Balance' and 'Nonce'
-		// 		6.1.1 get all keys (node IDs)
+		stateAccountList := make(map[string]StateValueStruct) // StateValueStruct has two fields: 'Balance' (float64) and 'Nonce' (int)
+		// 		6.1.1 get all statedb keys (node IDs) that currently exist (before this new block would have been processed)
 		nodeIDList := BoltGetDbKeys("statedb")
 		// 		6.1.2 	iterate over ids and retrieve current Account state, then create StateAccountWithID instance and add it to map
 		for _, n := range nodeIDList {
@@ -338,11 +347,14 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 			stateAccountList[n] = nAcc
 		}
 
-		// now go through each transaction one-by-one and have it affect an in-memory state if it is valid. After entire transaction list has been processed, compare resulting statemerkleroothash with the actual one (from db file)
+		// now go through each transaction one-by-one and have it affect the in-memory state if it is valid. After entire transaction list has been processed, compare resulting in-memory statemerkleroothash with the claimed one from the received block
+
+		logger.L.Printf("Data in new block with ID %v seem to be valid. Will now check transaction validity one-by-one..\n", newBlockHeader.BlockID)
+
 
 		// 6.2 go through transaction list and for each transaction check if it would be valid. remember state after transaction by affecting struct slice elements
 		for _, curTrans := range newBlock.Transactions {
-			// List of checks (2. was already done because sig has already been checked earlier):
+			// List of checks (2. would have been verifying sig validity but this has already been done earlier):
 			//		0. TxHash has been calculated correctly
 			//		1. From and To addresses start with "12D3Koo" AND From and To addresses are not identical (can't send tokens to yourself)
 			//		3. TxTime is later than 2024-01-01 and earlier than current time
@@ -412,77 +424,89 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 			}
 
 			// 5. Nonce of 'From' is increased by 1 compared to current statedb value Nonce
-			nStruct, ok := stateAccountList[curTrans.From]
+			txSenderWallet, ok := stateAccountList[curTrans.From]
 			if ok {
-			    if nStruct.Nonce + 1 != curTrans.Nonce {
-			    	return fmt.Errorf("BlockVerifyValidity - Transaction with txhash %v invalid because Nonce of 'From' does not have correct value. Expected %v but transaction contained %v \n", curTrans.TxHash.GetString(), nStruct.Nonce + 1, curTrans.Nonce)
+			    if txSenderWallet.Nonce + 1 != curTrans.Nonce {
+			    	return fmt.Errorf("BlockVerifyValidity - Transaction with txhash %v invalid because Nonce of 'From' does not have correct value. Expected %v but transaction contained %v \n", curTrans.TxHash.GetString(), txSenderWallet.Nonce + 1, curTrans.Nonce)
 			    }
 			} else {
-				logger.L.Panicf("BlockVerifyValidity - Sender of transaction of valid transaction does not already exist in the statedb, this should be impossible because it must have been rewarded or sent tokens already!")
+				logger.L.Panicf("BlockVerifyValidity - Sender %v of tx %v does not already exist in the statedb, this should be impossible because it must have been rewarded or sent tokens already!", curTrans.From, transactionHash.GetString(),)
 			}
 
-			// ---- Start affecting in-memory state ----
+			// ---- Start affecting in-memory state (Note: Go does not allow modyfing struct fields from a map (because you would be modifying a copy not the original), so you have to calculate the new fields value and then write back the entire struct instance. Alternatively you could adjust the map to hold pointer values but then syntax becomes ugly to read and write.) ----
 
-		    // AFFECT NONCE IN MEMORY
-		    nStruct.Nonce += 1
-		    stateAccountList[curTrans.From] = nStruct
+			// SENDER (From):
 
-			// AFFECT IN MEMORY BALANCE OF SENDER (maybe transaction 2 is valid on its own but not when it comes after transaction 1!)
-			if nStruct, ok := stateAccountList[curTrans.From]; ok {
-			    nStruct.Balance -= curTrans.Value + curTrans.Fee
-			    stateAccountList[curTrans.From] = nStruct
-			}
-			// AFFECT IN MEMORY BALANCE OF RECEIVER
-			if n2Struct, ok := stateAccountList[curTrans.To]; ok {
-			    n2Struct.Balance += curTrans.Value
-			    stateAccountList[curTrans.To] = n2Struct
+		    // 		calculate new sender NONCE
+		    txSenderWallet.Nonce += 1
+		    
+		    // 		calculate new sender BALANCE (i need to consider cases where maybe transaction 2 is valid on its own but not when it comes after transaction 1)
+			txSenderWallet.Balance -= curTrans.Value + curTrans.Fee
+		    
+		    // 		affect in-memory wallet of sender
+		    stateAccountList[curTrans.From] = txSenderWallet
+
+
+
+		    // RECEIVER (To):
+
+		    txReceiverWallet, ok := stateAccountList[curTrans.To]
+		    if ok { // ok just means: does the receiver already exist in the state? in contrast to the sender, the receiver is allowed to not already exist..
+		    	// 		calculate new receiver BALANCE
+			    txReceiverWallet.Balance += curTrans.Value
+			    // 		affect in-memory wallet of receiver
+			    stateAccountList[curTrans.To] = txReceiverWallet
 			} else {
 				// 'To' does not yet exist in statedb so create new struct and add it to map
-				toStruct := StateValueStruct {
+				newTxReceiverWallet := StateValueStruct {
 					Balance:	curTrans.Value,
 					Nonce: 		0,
 				}
-
-				stateAccountList[curTrans.To] = toStruct
+				// 		create in-memory wallet of receiver
+				stateAccountList[curTrans.To] = newTxReceiverWallet
 			}
 
 		}
 
-		// Now all transactions of this block have affected the in-memory state
+		// Now all transactions of this block have been checked for validity and have affected the in-memory state
+		// Before anything is actually affecting the actual db state, first perform the in-memory block winner award procedure.
 		
-		// Next, have the blockWinner be rewarded in memory (it probably is not in the map of existing accounts already, but it could be)
-		tokenReward := newBlock.BlockHeader.BlockWinner.TokenReward
-		winnerAddress := newBlock.BlockHeader.BlockWinner.WinnerAddress
-		if wStruct, ok := stateAccountList[winnerAddress]; ok {
-			// case: winner already exists in map
-			wStruct.Balance += tokenReward
-			stateAccountList[winnerAddress] = wStruct
+		// 		award block winner in memory (it might or might not already exist in map, same as 'To' before)
+		winnerNodeID := newBlock.BlockHeader.BlockWinner.WinnerAddress
+		winnerWallet, ok := stateAccountList[winnerNodeID]
+		if ok {
+			// case: winner already existed in state before
+			//		increase its balance
+			winnerWallet.Balance += correctReward
+			//		affect in-memory wallet of winner
+			stateAccountList[winnerNodeID] = winnerWallet
 		} else {
 			// case: winner does not exist in map yet
-			wStructNew := StateValueStruct {
-				Balance:	tokenReward,
+			winnerWalletNew := StateValueStruct {
+				Balance:	correctReward,
 				Nonce: 		0,
 			}
-			stateAccountList[winnerAddress] = wStructNew
+			//		create in-memory wallet of winner
+			stateAccountList[winnerNodeID] = winnerWalletNew
 		}
 
+		// ----
 
-		// now re-calculate the would-be state merkle tree root hash
+		// Now (before any actual db is affected) re-calculate the would-be state merkle tree root hash you would get with this new in-memory state to verify if the provided value in the block is correct
 
-		// 		first get list of now existing nodeIDs that is ascending
+		// 		first get list of now existing nodeIDs that is ascending (map isn't sorted to now put that maps keys into a slice so that there is a guarantee about the sorting)
 		var nodeIDsAscending []string
-		for mKey := range stateAccountList {
+		for mKey := range stateAccountList { // ignores returned values, it basically is "mKey, _ := "
 			nodeIDsAscending = append(nodeIDsAscending, mKey)
 		}
 		SortStringSliceAscending(nodeIDsAscending)
 
-		// 		then recreate slice of nodeID hashes in a valid format for the state merkle tree
+		// 		then recreate slice of nodeID hashes in a valid format for the state merkle tree (a key in the state is not just the nodeID, instead it is keccak256(<nodeID>+<serialized wallet of that nodeID>))
 		var nodeIDListAfterTrans []hash.Hash
 		for _, mapKey := range nodeIDsAscending {
-			// get current value in map if it exists
-			nStruct, exists := stateAccountList[mapKey]
-
-			if exists {
+			// get current value in map if it exists (ok)
+			nStruct, ok := stateAccountList[mapKey]
+			if ok {
 				// serialize its value
 				nStructSer, err := msgpack.Marshal(&nStruct)
 				if err != nil {
@@ -491,7 +515,7 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 				// determine its hash in the state merkle tree <nodeID>+<serialized value>
 				h := hash.NewHash(mapKey + string(nStructSer))
 
-				// then add hash to the slice
+				// then add hash to the slice (this hash is the actual key of the statedb)
 				nodeIDListAfterTrans = append(nodeIDListAfterTrans, h)
 
 				// debug
@@ -499,7 +523,7 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 				//logger.L.Printf("BTW: this is that node's wallet after processing all transactions:\nBalance: %v\nNonce: %v\n", nStruct.Balance, nStruct.Nonce)
 
 			} else {
-				logger.L.Panicf("In stateAccount map the key %v does not exist", mapKey)
+				logger.L.Panicf("In stateAccount map the key %v does not exist. This should be impossible!", mapKey)
 			}  	
     	}
 
@@ -509,7 +533,7 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
     	// 	logger.L.Printf("%v\n", v.GetString())
     	// }
     	
-		// 	7. State merkle tree after processing block matches blockheader value
+		// 	7. Finally I can verify the value of State merkle tree that was provided in the new block
 		stateMerkleTree := merkletree.NewMerkleTree(nodeIDListAfterTrans)
 		if stateMerkleTree.GetRootHash().GetString() != newBlock.BlockHeader.StateMerkleRoot.GetString() {
 			// debug: print statedb 
@@ -518,6 +542,8 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 
 			return fmt.Errorf("BlockVerifyValidity - Block with ID %v is invalid because its stateMerkleTreeRootHash is invalid! Expected %v but block has %v \n", newBlock.BlockHeader.BlockID, stateMerkleTree.GetRootHash().GetString(), newBlock.BlockHeader.StateMerkleRoot.GetString())
 		}
+
+		// all state-related validity checks have been completed, the new block still seems valid (but still has not affected the state of the actual db file)
 
 	}
 

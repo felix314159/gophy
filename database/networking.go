@@ -398,7 +398,7 @@ func SyncNode(ctx context.Context, h host.Host) {
 	} else {
 		SyncHelper.NodeModeWrite(SyncMode_Passive_Light)
 	}
-	logger.L.Printf("Sync success.\nSwitched to passive mode.\nChecking validity of chaindb..")
+	logger.L.Printf("Sync success.\nChecking validity of received data..\n")
 	
 	err = BlockchainVerifyValidity(IAmFullNode, false) // also affects statedb
 	if err != nil {
