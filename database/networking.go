@@ -282,7 +282,6 @@ func SyncNode(ctx context.Context, h host.Host) {
     // 		request interval: 10 sec
     ticker := time.NewTicker(10 * time.Second)
 
-    done := make(chan bool)
     acceptedData := func() []byte {
         for {
             select {
@@ -296,13 +295,11 @@ func SyncNode(ctx context.Context, h host.Host) {
 				}
             case acceptedData := <-acceptedDataChannel:
                 logger.L.Printf("Verified blockheaders have been received.")
-                ticker.Stop() // goal was achieved, no need for further ticks
-                done <- true
                 return acceptedData
+
             }
         }
     }()
-    <-done
 
 	// ----
 
@@ -318,8 +315,6 @@ func SyncNode(ctx context.Context, h host.Host) {
 		logger.L.Panicf("SyncNode - Accepted data has been compared with local state but failed: %v\nPlease re-sync your node.", err)
 	}
 	
-
-
 	// ---- Phase 2: Initial Sync: Get blocks/headers ----
 	
 	if IAmFullNode {
@@ -351,7 +346,6 @@ func SyncNode(ctx context.Context, h host.Host) {
 		// reset channel related data types
 		acceptedData = []byte{}
 		acceptedDataChannel = make(chan []byte)
-		done = make(chan bool)
 
 		// wait until data of interest has been received
 	    go waitForDataWithHash(blockHashString, acceptedDataChannel)
@@ -373,13 +367,10 @@ func SyncNode(ctx context.Context, h host.Host) {
 				// as soon as data with correct hash has been received stop requesting this piece of data and move on to the next block / header of interest
 	            case acceptedData = <-acceptedDataChannel:
 	                logger.L.Printf("Received data for block with hash %v.", blockHashString)
-	                ticker.Stop()
-	                done <- true
 	                return acceptedData
 	            }
 	        }
 	    }()
-	    <-done
 
 		// write data of this block to chaindb
 		err = BlockWriteToDb(recData, IAmFullNode)
