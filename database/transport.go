@@ -264,8 +264,8 @@ func TransportStructExtraction(expectedDataID TSData, tsSer []byte, onlyAllowRAo
 		}
 
 		// check validity of transaction
-		transactionIsValid, err, _, _, _, _ := StateDbTransactionIsAllowed(recTransaction)
-		if err != nil || (!transactionIsValid) {
+		err, _, _, _, _ = StateDbTransactionIsAllowed(recTransaction)
+		if err != nil {
 			return nil, "", fmt.Errorf("TransportStructExtraction - Received transaction is invalid: %v. Declining data sent by node %v \n", err, ts.OriginalSenderNodeID)
 		}
 		return ts.Data, "abc", nil // i put bogus hash because its not used anyways in this case

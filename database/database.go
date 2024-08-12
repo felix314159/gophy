@@ -702,8 +702,8 @@ func ResetBucket(bucketName string) error {
 // The function returns nil on success and error if the transaction is illegal or the statedb transaction fails.
 func PerformStateDbTransaction(t transaction.Transaction) error {
 	// first check whether transaction is allowed (lots of checks) and if so get new StateValueStruct for both accounts that hold state after the transaction
-	tIsValid, err, fromAddress, updatedFromValue, toAddress, updatedToValue := StateDbTransactionIsAllowed(t) // returns bool, error, string, []byte, string, []byte
-	if !tIsValid {
+	err, fromAddress, updatedFromValue, toAddress, updatedToValue := StateDbTransactionIsAllowed(t) // returns bool, error, string, []byte, string, []byte
+	if err != nil {
 		return fmt.Errorf("PerformStateDbTransaction - Transaction is invalid: %v \n", err)
 	}
 
@@ -733,23 +733,23 @@ func StateDbGetMerkleTree() merkletree.MerkleTree {
 	leafHashes := []hash.Hash{}
 
 	// calculate merkleHashes
-	for _, k := range stateKeys {
+	for _, nodeID := range stateKeys {
 		// get value from db
-		v, err := ReadFromBucket(k, "statedb")
-		if err != nil || v == nil {
+		serializedWallet, err := ReadFromBucket(nodeID, "statedb")
+		if err != nil || serializedWallet == nil {
 			logger.L.Panic(err)
 		}
-		// determine hash of <nodeID>+<serialized value>
-		h := hash.NewHash(k + string(v))
+		// determine hash of <nodeID>+<serialized value> (Explanation: The key of each wallet here must represent its actual current content so that balance changes affect the merkle tree root. So only when building the state merkle tree the keys are replaced with what they actually are (just the nodeID string)).
+		h := hash.NewHash(nodeID + string(serializedWallet))
 
 		// append to leafHashes
 		leafHashes = append(leafHashes, h)
 
 		// debug
-		//logger.L.Printf("Added sth derived from this key to StatenodeIDlistAfterTransctionProcessing: %v", k)
-		// 		deserialize v
+		//logger.L.Printf("Added sth derived from this key to StatenodeIDlistAfterTransctionProcessing: %v", nodeID)
+		// 		deserialize serializedWallet
 		//var nStruct StateValueStruct
-		//err = msgpack.Unmarshal(v, &nStruct)
+		//err = msgpack.Unmarshal(serializedWallet, &nStruct)
 		//if err != nil {
 		//	logger.L.Panic(err) // if majority of nodes sent data that is invalid there is no point in communicating further
 		//}
@@ -769,10 +769,12 @@ func StateDbGetMerkleTree() merkletree.MerkleTree {
 	// root (p01+p23):	55c781c89ea70ea9550ca1f5e9709cb404272a2a4263f24114c23d23bb9e6421
 
 	// debug:
-	// logger.L.Printf("Will now pass the following values to the State MerkleTree Constructor:")
-	// for _, v := range leafHashes {
-	// 	logger.L.Printf("%v\n", v.GetString())
-	// }
+	if DebugLogging {
+		logger.L.Printf("StateDbGetMerkleTree - Debug: Will now pass the following state merkle tree keys to the MerkleTree constructor:")
+		for _, merkleTreeKey := range leafHashes {
+			logger.L.Printf("Key: %v\n", merkleTreeKey.GetString())
+		}
+	}
 
 	// construct merkle tree
 	stateMerkleTree := merkletree.NewMerkleTree(leafHashes)

@@ -756,13 +756,12 @@ func TransactionListFilterOutInvalid(tl []transaction.Transaction) []transaction
 // Note: This function does not actually affect the statedb, it does not perform the transaction.
 // 
 // This function returns the following values:
-//		bool:	is this transaction valid?
 //		error: 	this is either nil (valid transaction) or holds error message (why transaction is not valid)
 //		string:	t.From (who sent the transaction)
 //		[]byte:	Serialized StateValueStruct of t.From (state of the transaction sender wallet after transaction would have been sent)
 //		string: t.To (who receives the transaction)
 //		[]byte: Serialized StateValueStruct of t.To (state of the transaction receiver wallet after transaction would have been performed)
-func StateDbTransactionIsAllowed(t transaction.Transaction) (bool, error, string, []byte, string, []byte) {
+func StateDbTransactionIsAllowed(t transaction.Transaction) (error, string, []byte, string, []byte) {
 	// hold the later resulting updated 'To' and 'From' statedb value fields in serialized form (will be returned non-nil if transaction is valid)
 	var fromNewValAfterTrans []byte
 	var toNewValAfterTrans []byte
@@ -782,20 +781,20 @@ func StateDbTransactionIsAllowed(t transaction.Transaction) (bool, error, string
 	// 		serialize object using msgpack and cast it from []byte to string
 	transactionSerialized, err := msgpack.Marshal(&transaction)
 	if err != nil {
-		return false, fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because serialization of it fails: %v \n", err), "", nil, "", nil
+		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because serialization of it fails: %v \n", err), "", nil, "", nil
 	}
 	// 		hash serialized transaction and return it as string
 	transactionHash := hash.NewHash(string(transactionSerialized))
 	//		ensure its the same hash
 	if transactionHash.GetString() != t.TxHash.GetString() { 
-		return false, fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because TxHash is wrong: Expected %v but transaction contained TxHash %v \n", transactionHash.GetString(), t.TxHash.GetString()), "", nil, "", nil
+		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because TxHash is wrong: Expected %v but transaction contained TxHash %v \n", transactionHash.GetString(), t.TxHash.GetString()), "", nil, "", nil
 	}
 
 	// 1. 'From' and 'To' start with "12D3Koo" and are not identical
 	var FromCouldBeValid bool = strings.HasPrefix(strings.ToLower(t.From), "12d3koo")
 	var ToCouldBeValid bool   = strings.HasPrefix(strings.ToLower(t.To), "12d3koo")
 	if (!FromCouldBeValid) || (!ToCouldBeValid) || (t.From == t.To){
-		return false, fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because 'From' or 'To' either don't start with 12D3Koo or they are identical\nFrom: %v\nTo: %v\n", t.From, t.To), "", nil, "", nil
+		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because 'From' or 'To' either don't start with 12D3Koo or they are identical\nFrom: %v\nTo: %v\n", t.From, t.To), "", nil, "", nil
 	}
 
 
@@ -803,16 +802,16 @@ func StateDbTransactionIsAllowed(t transaction.Transaction) (bool, error, string
 	// 		derive corresponding PubKey of transaction Sender nodeID
 	pub, err := NodeIDStringToPubKey(t.From)
 	if err != nil {
-		return false, fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because converting nodeID to corresponding public key failed: %v \n", err), "", nil, "", nil
+		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because converting nodeID to corresponding public key failed: %v \n", err), "", nil, "", nil
 	}
 	// 		check validity of signature (the txHash was signed - which is the hash of the transaction content)
 	sigIsValid, err := pub.Verify(t.TxHash.Bytes, t.Sig)	// (hashThatWasSignedAsBytes, ResultingSignature)
 	if err != nil {
-		return false, fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because signature check function failed: %v \n", err), "", nil, "", nil
+		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because signature check function failed: %v \n", err), "", nil, "", nil
 	}
 	// 		check if signature is valid or not
 	if !sigIsValid {
-		return false, fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because its signature is invalid!"), "", nil, "", nil
+		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because its signature is invalid!"), "", nil, "", nil
 	}
 
 
@@ -820,46 +819,46 @@ func StateDbTransactionIsAllowed(t transaction.Transaction) (bool, error, string
 	//		get From balance before the transaction
 	fromAccSer, err := ReadFromBucket(t.From, "statedb")
 	if err != nil {
-		return false, fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because acessing From in statedb produced error: %v", err), "", nil, "", nil
+		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because acessing From in statedb produced error: %v", err), "", nil, "", nil
 	}
 	if fromAccSer == nil {
-		return false, fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because 'From' address: %v does not exist in statedb and therfore does not have the required funds to perform any transaction!", t.From), "", nil, "", nil
+		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because 'From' address: %v does not exist in statedb and therfore does not have the required funds to perform any transaction!", t.From), "", nil, "", nil
 	}
 
 	//		deserialize/unmarshal
 	var fromAcc StateValueStruct
 	err = msgpack.Unmarshal(fromAccSer, &fromAcc)
 	if err != nil {
-		return false, fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because failed to deserialize From value in statedb. This is a critical error!"), "", nil, "", nil
+		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because failed to deserialize From value in statedb. This is a critical error!"), "", nil, "", nil
 	}
 	//		ensure that fromAcc.Balance >= t.Value + t.Fee
 	if fromAcc.Balance < t.Value + t.Fee {
-		return false, fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because amount of tokens sent + fee is larger than balance of From node!\nFrom Balance: %v\nTried to send amount: %v\nFee: %v\n", fromAcc.Balance, t.Value, t.Fee), "", nil, "", nil
+		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because amount of tokens sent + fee is larger than balance of From node!\nFrom Balance: %v\nTried to send amount: %v\nFee: %v\n", fromAcc.Balance, t.Value, t.Fee), "", nil, "", nil
 	}
 
 	// 3.4 ensure fee is at least as large as winner.MinTransactionAmount
 	if t.Fee < winner.MinTransactionAmount {
-		return false, fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because minimum required fee is %v but got amount %v\n", winner.MinTransactionAmount, t.Fee), "", nil, "", nil
+		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because minimum required fee is %v but got amount %v\n", winner.MinTransactionAmount, t.Fee), "", nil, "", nil
 	}
 
 	// 3.5 ensure that amount sent is at least as large as winner.MinTransactionAmount
 	if t.Value < winner.MinTransactionAmount {
-		return false, fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because minimum required amount is %v but got amount %v\n", winner.MinTransactionAmount, t.Value), "", nil, "", nil
+		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because minimum required amount is %v but got amount %v\n", winner.MinTransactionAmount, t.Value), "", nil, "", nil
 	}
 
 	// 4. ensure nonce was increased by 1
 	if (fromAcc.Nonce + 1) != t.Nonce {
-		return false, fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because nonce is invalid: Expected nonce %v but got %v \n", fromAcc.Nonce + 1, t.Nonce), "", nil, "", nil
+		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because nonce is invalid: Expected nonce %v but got %v \n", fromAcc.Nonce + 1, t.Nonce), "", nil, "", nil
 	}
 
 	// 5. ensure timestamp is newer than 2024-01-01 and older than current timestamp (GMT == UTC)
 	gmt20240101Epoch := uint64(1704067200) // this timestamp is in seconds
 	currentTime := uint64(time.Now().UTC().Unix()) + uint64(5) // add 5 extra seconds otherwise code can be so fast / clock of sender inaccurate that send and receive happens in the same second  
 	if t.TxTime < gmt20240101Epoch {
-		return false, fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because timestamp is before 2024-01-01 (1704067200): %v \n", t.TxTime), "", nil, "", nil
+		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because timestamp is before 2024-01-01 (1704067200): %v \n", t.TxTime), "", nil, "", nil
 	}
 	if t.TxTime > currentTime {
-		return false, fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because timestamp is in the future of UTC time: %v \n", t.TxTime), "", nil, "", nil
+		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because timestamp is in the future of UTC time: %v \n", t.TxTime), "", nil, "", nil
 	}
 
 
@@ -934,7 +933,7 @@ func StateDbTransactionIsAllowed(t transaction.Transaction) (bool, error, string
 	//		string: t.To (who receives the transaction)
 	//		[]byte: toNewValAfterTrans: Serialized StateValueStruct of t.To (state of the transaction receiver wallet after transaction would have been performed)
 
-	return true, nil, t.From, fromNewValAfterTrans, t.To, toNewValAfterTrans
+	return nil, t.From, fromNewValAfterTrans, t.To, toNewValAfterTrans
 }
 
 // ---- Strconv conversion helpers ----
