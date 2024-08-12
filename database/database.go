@@ -791,7 +791,8 @@ func StateDbNodeIDToMerkleHash(nodeID string) (hash.Hash, error) {
 
 // StateDbProcessAndUpdateBlock takes a block and performs its transactions in the statedb (statedb is affected) while also awarding the winner of this block.
 // Returns the block with its updated StateMerkleRoot and updated TransactionsMerkleRoot. For pseudo sim: Note that now the block will have a new hash which means a new key for being stored in chaindb.
-// Note: Before calling this function use BlockVerifyValidity() to ensure that all transactions are valid in this order, otherwise this function here could fail while runing leaving a corrupted state (e.g. transaction 3 fails when it occurs after transaction 2 but it seemed to be valid in isolation)
+// Note: Before calling this function use BlockVerifyValidity() to ensure that all transactions are valid in this order, otherwise this function here could fail while runing leaving a corrupted state (e.g. transaction 3 fails when it occurs after transaction 2 but it seemed to be valid in isolation).
+// This function only performs validity checks for included transactions, but it does not check the validity of other block fields like e.g. stateMerkleRootHash which makes it compatible with pseudo where this value is not known yet.
 func StateDbProcessAndUpdateBlock(b block.Block) (block.Block, error) {
 	// go through list of transactions and have them affect statedb if valid
 	for _, t := range b.Transactions {

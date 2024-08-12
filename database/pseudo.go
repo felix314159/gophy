@@ -63,17 +63,21 @@ func CreatePseudoBlockchainFull(blockAmount int, RApw string, transactionAmountP
 	startTime := time.Now() // will be updated with each iteration
 
 	for i := 1; i < blockAmount; i++ {
-		// get new block
+		// get new block (it is still invalid because fields for merkle root hashes of transactionList and state could not have been determined yet)
 		invalidBlock := getNextBlock(prevBlock, RApw, transactionAmountPerBlock)
-		logger.L.Printf("Got block, will now affect statedb..")
+		logger.L.Printf("Generated new block, will now affect statedb..")
 
-		// have block affect the statedb and itself (will get new StateMerkleRoot value in its Header)
+		// the following function call does four things:
+		//		1. check transactions for validity
+		//		2. determine wallets of sender and receiver after transactions would have been processed
+		//		3. award winner of block in state
+		//		4. update the provided block with resulting info (new merkle root of state and new merkle root of transaction list)
 		newBlock, err := StateDbProcessAndUpdateBlock(invalidBlock)
 		if err != nil {
 			logger.L.Panic(err)
 		}
 
-		// remember its hash
+		// remember hash of new block
 		// 		serialize header (preparation for re-calculating its hash)
 		blockHeaderNewSer, err := msgpack.Marshal(&newBlock.BlockHeader)
 		if err != nil {
@@ -129,7 +133,8 @@ func CreatePseudoBlockchainFull(blockAmount int, RApw string, transactionAmountP
 	}
 	logger.L.Printf("Size of blockchain is %v bytes", dbFileInfo.Size())
 
-	// you can not call BlockchainVerifyValidity here because it would affect the state, but you already have the current state when using pseudo.
+	// you can not call BlockchainVerifyValidity here because it would affect the state, but you already have affected your state when using pseudo. Pseudo must affect the state with each block because otherwise it would not be easy to determine the correct value for stateMerkleRootHash of a block while it is being generated.
+	// you can also not call BlockVerifyValidity because it assumes the current state is newest-1, but here you already have newest state.
 
 	return nil
 
