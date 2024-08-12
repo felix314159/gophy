@@ -106,7 +106,7 @@ func TransactionListToMerkleTreeRootHash(tList []Transaction) hash.Hash {
 	
 	// construct merkle tree
 	mTree := merkletree.NewMerkleTree(hashSlice)
-	
+
 	// returns its root hash as hash.Hash
 	return mTree.GetRootHash()
 }

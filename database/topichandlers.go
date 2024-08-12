@@ -443,6 +443,7 @@ func TopicNewProblemReceiveEvent(m pubsub.Message, h host.Host, ctx context.Cont
 
 	// update BlockProblemHelper with the newest problem
 	BlockProblemHelper.SetSimulationTask(simTaskObject)
+	logger.L.Printf("Because a new SimTask has been set, I will now reset the ActiveMiner slice and the raCommitSecret.")
 	// update BlockProblemHelper to reset miner info from previous block problem
 	err = BlockProblemHelper.ResetMiners()
 	if err != nil {

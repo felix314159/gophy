@@ -448,6 +448,9 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 			logger.L.Printf("BlockVerifyValidity - There is an issue with the statedb, here is a full dump of it:")
 			PrintStateDB()
 
+			// also print the merkle tree for easier debugging
+			stateMerkleTree.PrintTree()
+
 			return fmt.Errorf("BlockVerifyValidity - Block with ID %v is invalid because its stateMerkleTreeRootHash is invalid! Expected %v but block has %v \n", newBlock.BlockHeader.BlockID, stateMerkleTree.GetRootHash().GetString(), newBlock.BlockHeader.StateMerkleRoot.GetString())
 		}
 

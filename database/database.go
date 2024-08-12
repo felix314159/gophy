@@ -749,10 +749,19 @@ func StateDbGetMerkleTree() merkletree.MerkleTree {
 		for _, merkleTreeKey := range leafHashes {
 			logger.L.Printf("Key: %v\n", merkleTreeKey.GetString())
 		}
+
+		// also print all state info
+		PrintStateDB()
 	}
 
 	// construct merkle tree
 	stateMerkleTree := merkletree.NewMerkleTree(leafHashes)
+
+	// debug:
+	if DebugLogging {
+		logger.L.Printf("StateDbGetMerkleTree - Debug: This is the state merkle tree I got:\n")
+		stateMerkleTree.PrintTree()
+	}
 
 	return stateMerkleTree
 
@@ -1107,11 +1116,11 @@ func PrintSerializedStringSliceBlockHashes(receivedMessage []byte) {
 // PrintStateDB gets all keys from the statedb, retrieves the corresponding values (wallets) and prints their info.
 func PrintStateDB() {
 	stateKeys := BoltGetDbKeys("statedb")
-	for _, walletKey := range stateKeys {
-		logger.L.Printf("Retrieving data for statedb key '%v'\n", walletKey)
+	for _, nodeID := range stateKeys {
+		logger.L.Printf("Retrieving wallet of statedb key '%v'\n", nodeID) // the key is equal to the nodeID of the wallet holder
 
 		// retrieve data
-		walletBytes, err := ReadFromBucket(walletKey, "statedb")
+		walletBytes, err := ReadFromBucket(nodeID, "statedb")
 		if err != nil {
 			logger.L.Panic(err)
 		}
@@ -1123,7 +1132,11 @@ func PrintStateDB() {
 		}
 
 		// print wallet info
-		PrintStateDbWallet(wallet, walletKey)
+		PrintStateDbWallet(wallet, nodeID)
+
+		// print what the state merkle tree key would be for this node
+		stateMerkleKeyString := hash.NewHash(nodeID + string(walletBytes)).GetString()
+		logger.L.Printf("The merkle key for node %v would be %v\n", nodeID, stateMerkleKeyString) 
 
 	}
 }

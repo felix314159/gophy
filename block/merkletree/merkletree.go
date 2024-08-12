@@ -260,7 +260,8 @@ func (t MerkleTree) PrintRootHash() {
 
 // PrintTree is a method of MerkleTree that prints the entire tree.
 func (t MerkleTree) PrintTree() {
-	// nodeAmount := len(t.nodes)
+	logger.L.Printf("PrintTree - This is the state tree I built:\n")
+	
 	for i, n := range t.nodes {
 		// index
 		logger.L.Printf("Node Index: %v", i)

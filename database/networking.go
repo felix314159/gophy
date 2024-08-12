@@ -405,7 +405,7 @@ func SyncNode(ctx context.Context, h host.Host) {
 		logger.L.Panicf("Chaindb or statedb is NOT valid. It is recommended that you restart with -reset=true parameter! Error: %v", err)
 	} 
 	
-	logger.L.Printf("\nSuccessfully verfied validity of chaindb and statedb.\n")
+	logger.L.Printf("\nSuccessfully verfied validity of chaindb and built statedb.\n")
 
 	// set amount of required data confirmations back to initial value that was passed from main.go
 	SyncHelper.ConfirmationsReqWrite(initialConfReq)
@@ -607,8 +607,9 @@ func (b *BlockProblemHelperStruct) SetSimulationTask(simTask simpar.SimulationTa
 
 	b.SimulationTask = simTask
 
+	// setting an empty simtask is equal to resetting the current simtask
 	if (len(b.SimulationTask.ProblemHash.Bytes) == 0) {
-		logger.L.Printf("SimulationTask has been reset\n")
+		logger.L.Printf("Empty SimulationTask has been set\n") // could e.g. happen when RA sends you live data before it ever had created a block problem
 	} else {
 		logger.L.Printf("SimulationTask with unique ID %v has been set\n", simTask.ProblemHash.GetString())
 	}
