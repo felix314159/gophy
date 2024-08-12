@@ -291,25 +291,6 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 
 	// full nodes will have to perform more tests than light nodes:
 	if fullNode {
-		// 4. Transaction Signatures are valid
-		for _, t := range newBlock.Transactions {
-			// derive corresponding PubKey of transaction Sender nodeID
-			pub, err := NodeIDStringToPubKey(t.From)
-			if err != nil {
-				return fmt.Errorf("BlockVerifyValidity - Validity check failed: Failed to derive pubKey from nodeIDstring. The nodeID %v leads to error: %v\n", t.From, err)
-			}
-			// check validity of signature (the txHash was signed - which is the hash of the transaction content)
-			sigIsValid, err := pub.Verify(t.TxHash.Bytes, t.Sig)	// (hashThatWasSignedAsBytes, ResultingSignature)
-			if err != nil {
-				return fmt.Errorf("BlockVerifyValidity - Validity check failed: Failed to verify signature of txHash %v due to error: %v \n", t.TxHash, err)
-			}
-			// check if signature is valid or not
-			if !sigIsValid {
-				return fmt.Errorf("BlockVerifyValidity - Validity check failed: WARNING: The provided signature is NOT authentic. Transaction with TxHash %v  has been tempered with! \n", t.TxHash)
-			}
-			
-		}
-
 		// 5. Transaction list merkle tree roothash was calculated correctly
 		merkleTreeRootHashTrans := transaction.TransactionListToMerkleTreeRootHash(newBlock.Transactions)	// returns hash.Hash
 		if merkleTreeRootHashTrans.GetString() != newBlock.BlockHeader.TransactionsMerkleRoot.GetString() {
@@ -317,13 +298,13 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 		}
 
 		// 6. All transactions are valid check. first simulates transactions in memory without affecting db so that db is not affected by invalid block
-
 		//	6.1 in order to later check whether the in-memory state is equal to the db state, first retrieve ALL statedb accounts as objects in memory (even those that are not affected by transactions as they are needed to later verify the stateMerkleRoot without affecting the db)
 		//  6.2 in the order of the given transactions, check if the current transaction would be valid and have it affect the memory objects
-		//  6.3 if any transaction does not pass the test, then return invalid (db was never affected)
+		//  6.3 if any transaction does not pass the test, then return invalid (actual db was never affected so this does not corrupt anything)
 		//  6.4 construct stateMerkleTree and check its root against the value provided in the block we are checking
 		//  6.5 have winnerAddress affect the in-memory balance
 		//  6.6 build state merkle tree from in memory objects and compare with value in block to see if it is valid
+
 
 		// 6.1 Read database into memory so that after all the tests in-memory can be compared to actual state
 		// 		6.1.0 create nodeid->StateValueStruct mapping
@@ -354,116 +335,43 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 
 		// 6.2 go through transaction list and for each transaction check if it would be valid. remember state after transaction by affecting struct slice elements
 		for _, curTrans := range newBlock.Transactions {
-			// List of checks (2. would have been verifying sig validity but this has already been done earlier):
-			//		0. TxHash has been calculated correctly
-			//		1. From and To addresses start with "12D3Koo" AND From and To addresses are not identical (can't send tokens to yourself)
-			//		3. TxTime is later than 2024-01-01 and earlier than current time
-			//		4. From Balance >= Amount + Fee sent; also ensure that amount >= min transferrable token amount
-			//		5. Nonce of 'From' is increased by 1 compared to current statedb value Nonce
-
-			// 0. TxHash
-			// 		create inital transaction object
-			transRecon := transaction.Transaction {
-				From:   curTrans.From,
-				TxTime: curTrans.TxTime,
-				To:     curTrans.To,
-				Value:  curTrans.Value,
-				Reference: curTrans.Reference,
-				Nonce:  curTrans.Nonce,
-				Fee: curTrans.Fee,
-			}
-			// 		serialize object using msgpack and cast it from []byte to string
-			transactionSerialized, err := msgpack.Marshal(&transRecon)
+			
+			// validity of sigs will be verified in the call to StateDbTransactionIsAllowed
+			// lets get the would-be resulting wallets after this transaction would have been processed
+			err, fromAddress, updatedWalletFrom, toAddress, updatedWalletTo := StateDbTransactionIsAllowed(curTrans)
 			if err != nil {
-				return fmt.Errorf("BlockVerifyValidity - Transaction invalid because serialization of it fails: %v \n", err)
-			}
-			// 		hash serialized transaction and return it as string
-			transactionHash := hash.NewHash(string(transactionSerialized))
-			//		ensure its the same hash
-			if transactionHash.GetString() != curTrans.TxHash.GetString() { 
-				return fmt.Errorf("BlockVerifyValidity - Transaction invalid because TxHash is wrong: Expected %v but transaction contained TxHash %v \n", transactionHash.GetString(), curTrans.TxHash.GetString())
+				return fmt.Errorf("BlockVerifyValidity - Transaction is invalid: %v \n", err)
 			}
 
+			// ---- Affect in-memory state (Note: Go does not allow modyfing struct fields from a map (because you would be modifying a copy not the original), so you have to calculate the new fields value and then write back the entire struct instance. Alternatively you could adjust the map to hold pointer values but then syntax becomes ugly to read and write.) ----
 
-			// 1. From and To addresses valid and not identical
-			var FromCouldBeValid bool = strings.HasPrefix(strings.ToLower(curTrans.From), "12d3koo")
-			var ToCouldBeValid bool   = strings.HasPrefix(strings.ToLower(curTrans.To), "12d3koo")
-			if (!FromCouldBeValid) || (!ToCouldBeValid) || (curTrans.From == curTrans.To){
-				return fmt.Errorf("BlockVerifyValidity - Transaction invalid because 'From' or 'To' either don't start with 12D3Koo or they are identical\nFrom: %v\nTo: %v\n", curTrans.From, curTrans.To)
+			// deserialze resulting wallets
+			//		From
+			txSenderWallet, err := StateDbBytesToStruct(updatedWalletFrom)
+			if err != nil {
+				logger.L.Panic(err)
 			}
 
-
-			// 3. transaction time newer than 2024 start and older than current time
-			gmt20240101Epoch := uint64(1704067200)
-			currentTime := uint64(time.Now().UTC().Unix())
-			if curTrans.TxTime < gmt20240101Epoch {
-				return fmt.Errorf("BlockVerifyValidity - Transaction invalid because timestamp is before 2024-01-01 (1704067200): %v \n", curTrans.TxTime)
-			}
-			if curTrans.TxTime > currentTime {
-				return fmt.Errorf("BlockVerifyValidity - Transaction invalid because timestamp is in the future of UTC time: %v \n", curTrans.TxTime)
+			//		To
+			txReceiverWallet, err := StateDbBytesToStruct(updatedWalletTo)
+			if err != nil {
+				logger.L.Panic(err)
 			}
 
-
-			// 4. From Balance >= Amount + Fee sent AND amount >= min transferrable token amount
-			//		4.1 first ensure that From is a valid key in our map
-			if _, ok := stateAccountList[curTrans.From]; !ok {
-				return fmt.Errorf("BlockVerifyValidity - Transaction invalid because transaction Sender nodeID %v does not exist in statedb and therefore can't have any balance!", curTrans.From)
-			}
-
-			if stateAccountList[curTrans.From].Balance < curTrans.Value + curTrans.Fee {
-				return fmt.Errorf("BlockVerifyValidity - Transaction invalid because amount of tokens sent + fee is larger than balance of From node!\nFrom Balance: %v\nTried to send amount: %v\nFee: %v\n", stateAccountList[curTrans.From].Balance, curTrans.Value, curTrans.Fee)
-			}
-
-			// also ensure fee and value are at least as large as winner.MinTransactionAmount
-			if curTrans.Fee < winner.MinTransactionAmount {
-				return fmt.Errorf("BlockVerifyValidity - Transaction invalid because minimum required fee is %v but got amount %v\n", winner.MinTransactionAmount, curTrans.Fee)
-			}
-
-			if curTrans.Value < winner.MinTransactionAmount {
-				return fmt.Errorf("BlockVerifyValidity - Transaction invalid because min amount of tokens you must send is %v but %v was given.\n", winner.MinTransactionAmount, curTrans.Value)
-			}
-
-			// 5. Nonce of 'From' is increased by 1 compared to current statedb value Nonce
-			txSenderWallet, ok := stateAccountList[curTrans.From]
-			if ok {
-			    if txSenderWallet.Nonce + 1 != curTrans.Nonce {
-			    	return fmt.Errorf("BlockVerifyValidity - Transaction with txhash %v invalid because Nonce of 'From' does not have correct value. Expected %v but transaction contained %v \n", curTrans.TxHash.GetString(), txSenderWallet.Nonce + 1, curTrans.Nonce)
-			    }
-			} else {
-				logger.L.Panicf("BlockVerifyValidity - Sender %v of tx %v does not already exist in the statedb, this should be impossible because it must have been rewarded or sent tokens already!", curTrans.From, transactionHash.GetString(),)
-			}
-
-			// ---- Start affecting in-memory state (Note: Go does not allow modyfing struct fields from a map (because you would be modifying a copy not the original), so you have to calculate the new fields value and then write back the entire struct instance. Alternatively you could adjust the map to hold pointer values but then syntax becomes ugly to read and write.) ----
-
-			// SENDER (From):
-
-		    // 		calculate new sender NONCE
-		    txSenderWallet.Nonce += 1
 		    
-		    // 		calculate new sender BALANCE (i need to consider cases where maybe transaction 2 is valid on its own but not when it comes after transaction 1)
-			txSenderWallet.Balance -= curTrans.Value + curTrans.Fee
-		    
-		    // 		affect in-memory wallet of sender
-		    stateAccountList[curTrans.From] = txSenderWallet
+		    // 		affect in-memory wallet of sender (overwrite previous)
+		    //			This is simple because in order for the transaction to be valid the Sender must have existed in the state before.
+		    stateAccountList[fromAddress] = txSenderWallet
 
-
-
-		    // RECEIVER (To):
-
+		    // 		affect in-memory wallet of receiver (overwrite previous)
+		    //			This requires more logic as the Receiver might not have existed in the state before.
 		    txReceiverWallet, ok := stateAccountList[curTrans.To]
-		    if ok { // ok just means: does the receiver already exist in the state? in contrast to the sender, the receiver is allowed to not already exist..
-		    	// 		calculate new receiver BALANCE
-			    txReceiverWallet.Balance += curTrans.Value
+		    if ok { // ok means: the receiver already existed in the state before
 			    // 		affect in-memory wallet of receiver
-			    stateAccountList[curTrans.To] = txReceiverWallet
+			    stateAccountList[toAddress] = txReceiverWallet
 			} else {
 				// 'To' does not yet exist in statedb so create new struct and add it to map
-				newTxReceiverWallet := StateValueStruct {
-					Balance:	curTrans.Value,
-					Nonce: 		0,
-				}
-				// 		create in-memory wallet of receiver
-				stateAccountList[curTrans.To] = newTxReceiverWallet
+				stateAccountList[toAddress] = txReceiverWallet
 			}
 
 		}
@@ -503,27 +411,27 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 
 		// 		then recreate slice of nodeID hashes in a valid format for the state merkle tree (a key in the state is not just the nodeID, instead it is keccak256(<nodeID>+<serialized wallet of that nodeID>))
 		var nodeIDListAfterTrans []hash.Hash
-		for _, mapKey := range nodeIDsAscending {
+		for _, nodeID := range nodeIDsAscending {
 			// get current value in map if it exists (ok)
-			nStruct, ok := stateAccountList[mapKey]
+			wallet, ok := stateAccountList[nodeID]
 			if ok {
 				// serialize its value
-				nStructSer, err := msgpack.Marshal(&nStruct)
+				nStructSer, err := msgpack.Marshal(&wallet)
 				if err != nil {
 					logger.L.Panic(err)
 				}
 				// determine its hash in the state merkle tree <nodeID>+<serialized value>
-				h := hash.NewHash(mapKey + string(nStructSer))
+				h := hash.NewHash(nodeID + string(nStructSer))
 
 				// then add hash to the slice (this hash is the actual key of the statedb)
 				nodeIDListAfterTrans = append(nodeIDListAfterTrans, h)
 
 				// debug
-				//logger.L.Printf("Added sth derived from this key to StatenodeIDlistAfterTransctionProcessing: %v", mapKey)
-				//logger.L.Printf("BTW: this is that node's wallet after processing all transactions:\nBalance: %v\nNonce: %v\n", nStruct.Balance, nStruct.Nonce)
+				//logger.L.Printf("Added sth derived from this key to StatenodeIDlistAfterTransctionProcessing: %v", nodeID)
+				//logger.L.Printf("BTW: this is that node's wallet after processing all transactions:\nBalance: %v\nNonce: %v\n", wallet.Balance, wallet.Nonce)
 
 			} else {
-				logger.L.Panicf("In stateAccount map the key %v does not exist. This should be impossible!", mapKey)
+				logger.L.Panicf("In the stateAccount map, the key %v does not exist. This should be impossible!", nodeID)
 			}  	
     	}
 
