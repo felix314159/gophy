@@ -697,31 +697,6 @@ func ResetBucket(bucketName string) error {
 
 }
 
-// PerformStateDbTransaction takes a transaction object as input and checks whether that transaction is legal and if it is legal performs the transaction.
-// That means 'From' balance is decreased by Amount+Fee, 'From' Nonce is increased by 1, and 'To' balance is increased by Amount.
-// The function returns nil on success and error if the transaction is illegal or the statedb transaction fails.
-func PerformStateDbTransaction(t transaction.Transaction) error {
-	// first check whether transaction is allowed (lots of checks) and if so get new StateValueStruct for both accounts that hold state after the transaction
-	err, fromAddress, updatedFromValue, toAddress, updatedToValue := StateDbTransactionIsAllowed(t) // returns bool, error, string, []byte, string, []byte
-	if err != nil {
-		return fmt.Errorf("PerformStateDbTransaction - Transaction is invalid: %v \n", err)
-	}
-
-	// update accounts
-	//		From
-	err = WriteToBucket(fromAddress, updatedFromValue, "statedb")
-	if err != nil {
-		logger.L.Panicf("Failed to update statedb value: %v \n", err)
-	}
-	//		To
-	err = WriteToBucket(toAddress, updatedToValue, "statedb")
-	if err != nil {
-		logger.L.Panicf("Failed to update statedb value: %v \n", err)
-	}
-
-	return nil
-}
-
 // StateDbGetMerkleTree uses bbolt to get all keys of statedb in ascending order, then gets their values and hashes them, 
 // then these hashes are used ascending as leafs of the merkle tree. Then the merkle tree is built and returned.
 // This function will be called anytime after a new block has been fully processed to rebuild the statedb's Merkle Tree.
@@ -816,12 +791,18 @@ func StateDbNodeIDToMerkleHash(nodeID string) (hash.Hash, error) {
 
 // StateDbProcessAndUpdateBlock takes a block and performs its transactions in the statedb (statedb is affected) while also awarding the winner of this block.
 // Returns the block with its updated StateMerkleRoot and updated TransactionsMerkleRoot. For pseudo sim: Note that now the block will have a new hash which means a new key for being stored in chaindb.
+// Note: Before calling this function use BlockVerifyValidity() to ensure that all transactions are valid in this order, otherwise this function here could fail while runing leaving a corrupted state (e.g. transaction 3 fails when it occurs after transaction 2 but it seemed to be valid in isolation)
 func StateDbProcessAndUpdateBlock(b block.Block) (block.Block, error) {
 	// go through list of transactions and have them affect statedb if valid
 	for _, t := range b.Transactions {
-		// perform transaction if it is valid (affects statedb)
-		// important that you already checked validity of block, otherwise the following line could perform a few valid transactions and then fail on an invalid transaction leaving your state corrupted
-		err := PerformStateDbTransaction(t)
+		// determine wallets of tx sender and receiver after it would have been processed
+		err, fromAddress, updatedFromValue, toAddress, updatedToValue := StateDbTransactionIsAllowed(t) // returns bool, error, string, []byte, string, []byte
+		if err != nil {
+			return block.Block{}, fmt.Errorf("StateDbProcessAndUpdateBlock - Transaction is invalid: %v \n", err)
+		}
+
+		// perform transaction (affects statedb)
+		err = PerformStateDbTransaction(fromAddress, updatedFromValue, toAddress, updatedToValue)
 		if err != nil {
 			return block.Block{}, fmt.Errorf("StateDbProcessAndUpdateBlock - Failed to process transaction, it might be invalid: %v", err)
 		}
@@ -842,6 +823,25 @@ func StateDbProcessAndUpdateBlock(b block.Block) (block.Block, error) {
 	// return the updated block
 	return b, nil
 
+}
+
+// PerformStateDbTransaction takes transaction related info (state of involved wallets after tx was processed) as input and performs the transaction to affect the state.
+// That means 'From' balance is decreased by Amount+Fee, 'From' Nonce is increased by 1, and 'To' balance is increased by Amount.
+// The function returns nil on success and panics if something went wrong (at some point try to recover here, it should not happen anyways for now).
+func PerformStateDbTransaction(fromAddress string, updatedFromValue []byte, toAddress string, updatedToValue []byte) error {
+	// update accounts
+	//		From
+	err := WriteToBucket(fromAddress, updatedFromValue, "statedb")
+	if err != nil {
+		logger.L.Panicf("Failed to update statedb value: %v \n", err)
+	}
+	//		To
+	err = WriteToBucket(toAddress, updatedToValue, "statedb")
+	if err != nil {
+		logger.L.Panicf("Failed to update statedb value: %v \n", err)
+	}
+
+	return nil
 }
 
 // StateDbAwardWinner is used when a block that has been signed by the RA is received to award the block's winner address.
