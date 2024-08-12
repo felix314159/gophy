@@ -243,6 +243,16 @@ func StateDbBytesToStruct(ser []byte) (StateValueStruct, error) {
 	return deser, nil
 }
 
+// StateDbStructToBytes takes a StateValueStruct and msgpack serializes it. Returns serialized data and error.
+func StateDbStructToBytes(s StateValueStruct) ([]byte, error) {
+	stateValueStructSer, err := msgpack.Marshal(&s)
+	if err != nil {
+		return nil, fmt.Errorf("StateDbStructToBytes - Failed to serialize StateValueStruct due to error: %v\n", err)
+	}
+
+	return stateValueStructSer, nil
+}
+
 // HexStringToNumber takes the output string of a hash function and returns a uint64 number that is derived from this value.
 // The first 15 chars of the input string are converted (to guarantee that it fits into uint64) and the rest is ignored.
 func HexStringToNumber(a string) uint64 {

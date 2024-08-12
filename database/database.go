@@ -806,7 +806,7 @@ func StateDbProcessAndUpdateBlock(b block.Block) (block.Block, error) {
 	// go through list of transactions and have them affect statedb if valid
 	for _, t := range b.Transactions {
 		// determine wallets of tx sender and receiver after it would have been processed
-		err, fromAddress, updatedFromValue, toAddress, updatedToValue := StateDbTransactionIsAllowed(t) // returns bool, error, string, []byte, string, []byte
+		err, fromAddress, updatedFromValue, toAddress, updatedToValue := StateDbTransactionIsAllowed(t, true, []byte{}, []byte{}) // returns bool, error, string, []byte, string, []byte
 		if err != nil {
 			return block.Block{}, fmt.Errorf("StateDbProcessAndUpdateBlock - Transaction is invalid: %v \n", err)
 		}

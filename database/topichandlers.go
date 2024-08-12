@@ -147,7 +147,7 @@ func TopicNewBlockReceiveEvent(m pubsub.Message, h host.Host, ctx context.Contex
 
 	// check validity (pass info on whether you are a full node or a light node)
 	logger.L.Printf("Received new block from RA. Will now check whether it passes validity tests.")
-	err = BlockVerifyValidity(IAmFullNode, prevBlockBytes, recData, true)
+	err = BlockVerifyValidity(IAmFullNode, prevBlockBytes, recData, true) // true because the RA sends full blocks to everyone, whether light nodes will discard some of that info or not does not matter here
 	if err != nil {
 		logger.L.Panicf("Block received from %v (orginally created by RA) is not a valid continuation of your blockchain! Resync your node! Reason: %v \n", senderNodeID, err)
 	}

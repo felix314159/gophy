@@ -263,8 +263,8 @@ func TransportStructExtraction(expectedDataID TSData, tsSer []byte, onlyAllowRAo
 			return nil, "", fmt.Errorf("TransportStructExtraction - Failed to deserialize data into Transaction due to error: %v. Declining data sent by node %v \n", err, ts.OriginalSenderNodeID)
 		}
 
-		// check validity of transaction
-		err, _, _, _, _ = StateDbTransactionIsAllowed(recTransaction)
+		// check validity of transaction using actual state data
+		err, _, _, _, _ = StateDbTransactionIsAllowed(recTransaction, true, []byte{}, []byte{})
 		if err != nil {
 			return nil, "", fmt.Errorf("TransportStructExtraction - Received transaction is invalid: %v. Declining data sent by node %v \n", err, ts.OriginalSenderNodeID)
 		}

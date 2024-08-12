@@ -319,26 +319,84 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 			}
 
 			// 			deserialize
-			nAcc, err := StateDbBytesToStruct(nAccSer)
+			wallet, err := StateDbBytesToStruct(nAccSer)
 			if err != nil {
 				return fmt.Errorf("BlockVerifyValidity - Validity check failed: %v \n", err)
 			}
 
 			// 			add struct to slice
-			stateAccountList[n] = nAcc
+			stateAccountList[n] = wallet
+
+			// debug
+			if DebugLogging {
+				logger.L.Printf("BlockVerifyValidity - Added key %v to stateAccount in-memory map.\n", n)
+			}
 		}
 
-		// now go through each transaction one-by-one and have it affect the in-memory state if it is valid. After entire transaction list has been processed, compare resulting in-memory statemerkleroothash with the claimed one from the received block
+		// debug
+		if DebugLogging {
+			logger.L.Printf("BlockVerifyValidity - In-memory map has been populated with the following keys: \n")
+			for k := range stateAccountList {
+				logger.L.Printf("Key: %v\n", k)
+			}
+		}
 
-		logger.L.Printf("Data in new block with ID %v seem to be valid. Will now check transaction validity one-by-one..\n", newBlockHeader.BlockID)
+
+		// now go through each transaction one-by-one and have it affect the in-memory state if it is valid. After entire transaction list has been processed, compare resulting in-memory statemerkleroothash with the claimed one from the received block
+		logger.L.Printf("Data in new block with ID %v seem to be valid. Will now check transaction validity one-by-one. Length of tx list: %v\n", newBlockHeader.BlockID, len(newBlock.Transactions))
 
 
 		// 6.2 go through transaction list and for each transaction check if it would be valid. remember state after transaction by affecting struct slice elements
 		for _, curTrans := range newBlock.Transactions {
-			
+			// debug
+			if DebugLogging {
+				logger.L.Printf("BlockVerifyValidity - Will now check validity of tx with hash %v\n", curTrans.TxHash.GetString())
+			}
+
 			// validity of sigs will be verified in the call to StateDbTransactionIsAllowed
 			// lets get the would-be resulting wallets after this transaction would have been processed
-			err, fromAddress, updatedWalletFrom, toAddress, updatedWalletTo := StateDbTransactionIsAllowed(curTrans)
+
+			var txSenderWalletSer []byte
+			var txReceiverWalletSer []byte
+
+			// 	but first get the current in-memory walletSer of 'From' and (if it exists) of 'To' [in the latter case create instance with 0 balance 0 nonce instead and pass it in serialized form]
+			//		FROM
+			txSenderWalletBeforeTx, ok := stateAccountList[curTrans.From]
+		    if ok { // it exists
+		    	// serialize it
+		    	txSenderWalletSer, err = StateDbStructToBytes(txSenderWalletBeforeTx)
+		    	if err != nil {
+		    		logger.L.Panicf("BlockVerifyValidity - Failed to serialize in-memory StateValueStruct of tx sender due to: %v\n", err)
+		    	}
+		    } else {
+		    	return fmt.Errorf("BlockVerifyValidity - Sender of tx does not exist in statedb. But if sender of transaction does not exist in statedb it can't be a valid transaction because that sender can't possibly own tokens to send.\n")
+		    }
+		    //		TO
+		    txReceiverWalletBeforeTx, ok := stateAccountList[curTrans.To]
+		    if ok { // it exists
+		    	// serialize it
+		    	txReceiverWalletSer, err = StateDbStructToBytes(txReceiverWalletBeforeTx)
+		    	if err != nil {
+		    		logger.L.Panicf("BlockVerifyValidity - Failed to serialize in-memory StateValueStruct of tx receiver due to: %v\n", err)
+		    	}
+		    } else {
+		    	// for 'To' it is ok to not have existed before the transaction, so lets create it
+		    	toWallet := StateValueStruct {
+		    		Balance: 0,
+		    		Nonce: 0,
+		    	}
+
+		    	// serialize it
+		    	txReceiverWalletSer, err = StateDbStructToBytes(toWallet)
+		    	if err != nil {
+		    		logger.L.Panicf("BlockVerifyValidity - Failed to serialize in-memory StateValueStruct of tx receiver due to: %v\n", err)
+		    	}
+
+		    }
+
+		    // ---- Now check whether this transaction is possible state wise ----
+
+			err, fromAddress, updatedWalletFrom, toAddress, updatedWalletTo := StateDbTransactionIsAllowed(curTrans, false, txSenderWalletSer, txReceiverWalletSer) // important to set false so that in-memory states are used here
 			if err != nil {
 				return fmt.Errorf("BlockVerifyValidity - Transaction is invalid: %v \n", err)
 			}
@@ -359,20 +417,9 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 			}
 
 		    
-		    // 		affect in-memory wallet of sender (overwrite previous)
-		    //			This is simple because in order for the transaction to be valid the Sender must have existed in the state before.
+		    // 	affect in-memory wallet of sender and receiver (overwrite previous if it exists, or create new if it did not exist already)
 		    stateAccountList[fromAddress] = txSenderWallet
-
-		    // 		affect in-memory wallet of receiver (overwrite previous)
-		    //			This requires more logic as the Receiver might not have existed in the state before.
-		    txReceiverWallet, ok := stateAccountList[curTrans.To]
-		    if ok { // ok means: the receiver already existed in the state before
-			    // 		affect in-memory wallet of receiver
-			    stateAccountList[toAddress] = txReceiverWallet
-			} else {
-				// 'To' does not yet exist in statedb so create new struct and add it to map
-				stateAccountList[toAddress] = txReceiverWallet
-			}
+			stateAccountList[toAddress] = txReceiverWallet
 
 		}
 
@@ -412,7 +459,7 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 		// 		then recreate slice of nodeID hashes in a valid format for the state merkle tree (a key in the state is not just the nodeID, instead it is keccak256(<nodeID>+<serialized wallet of that nodeID>))
 		var nodeIDListAfterTrans []hash.Hash
 		for _, nodeID := range nodeIDsAscending {
-			// get current value in map if it exists (ok)
+			// get updated in-memory wallet from map if it exists (ok)
 			wallet, ok := stateAccountList[nodeID]
 			if ok {
 				// serialize its value
@@ -435,12 +482,6 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 			}  	
     	}
 
-    	// debug
-    	// logger.L.Printf("Will now pass the following values to the State MerkleTree Constructor:")
-    	// for _, v := range nodeIDListAfterTrans {
-    	// 	logger.L.Printf("%v\n", v.GetString())
-    	// }
-    	
 		// 	7. Finally I can verify the value of State merkle tree that was provided in the new block
 		stateMerkleTree := merkletree.NewMerkleTree(nodeIDListAfterTrans)
 		if stateMerkleTree.GetRootHash().GetString() != newBlock.BlockHeader.StateMerkleRoot.GetString() {
@@ -655,6 +696,7 @@ func TransactionListFilterOutInvalid(tl []transaction.Transaction) []transaction
 
 // StateDbTransactionIsAllowed takes a transaction and checks whether it is valid or not. If it is valid, it will determine the new statedb values of
 // both account involved in the transaction and return the data in such a way that it will be easy to actually perform the transaction without having to perform unnecessary, additional statedb lookups.
+// This function's behavior can be toggled with a bool so that in-memory pseudo states are used instead of reading the actual current state from the db file, which is used by BlockVerifyValidity() which wants to safely determine validity without touching the state. In order to avoid duplication of verification logic, I added this bool so that this function's behavior can be adjusted when needed.
 // Here is a list of things that must be true so that the transaction can be allowed:
 //		0. TxHash has been calculated correctly
 //		1. From and To addresses start with "12D3Koo" AND From and To addresses are not identical (can't send tokens to yourself)
@@ -672,7 +714,7 @@ func TransactionListFilterOutInvalid(tl []transaction.Transaction) []transaction
 //		[]byte:	Serialized StateValueStruct of t.From (state of the transaction sender wallet after transaction would have been sent)
 //		string: t.To (who receives the transaction)
 //		[]byte: Serialized StateValueStruct of t.To (state of the transaction receiver wallet after transaction would have been performed)
-func StateDbTransactionIsAllowed(t transaction.Transaction) (error, string, []byte, string, []byte) {
+func StateDbTransactionIsAllowed(t transaction.Transaction, readActualStateFromDb bool, pseudoStateFrom []byte, pseudoStateTo []byte) (error, string, []byte, string, []byte) {
 	// hold the later resulting updated 'To' and 'From' statedb value fields in serialized form (will be returned non-nil if transaction is valid)
 	var fromNewValAfterTrans []byte
 	var toNewValAfterTrans []byte
@@ -726,16 +768,51 @@ func StateDbTransactionIsAllowed(t transaction.Transaction) (error, string, []by
 	}
 
 
-	// 3. ensure that From Balance >= Amount+Fee
-	//		get From balance before the transaction
-	fromAccSer, err := ReadFromBucket(t.From, "statedb")
-	if err != nil {
-		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because acessing From in statedb produced error: %v", err), "", nil, "", nil
-	}
-	if fromAccSer == nil {
-		return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because 'From' address: %v does not exist in statedb and therfore does not have the required funds to perform any transaction!", t.From), "", nil, "", nil
+	// 2.5 decide whether to read actual state from db or to use passed in-memory states
+	var fromAccSer []byte
+	var toAccSer []byte
+
+	if readActualStateFromDb {
+		// FROM
+		// 		read the actual state of the 'From' account from the statedb
+		fromAccSer, err = ReadFromBucket(t.From, "statedb")
+		if err != nil {
+			return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because acessing From in statedb produced error: %v", err), "", nil, "", nil
+		}
+		if fromAccSer == nil {
+			return fmt.Errorf("StateDbTransactionIsAllowed - Transaction invalid because 'From' address: %v does not exist in statedb and therfore does not have the required funds to perform any transaction!", t.From), "", nil, "", nil
+		}
+
+		// TO
+		toAccSer, err = ReadFromBucket(t.To, "statedb")
+		if err != nil {
+			logger.L.Panic(err)
+		}
+		//			if receiver address does not exist already in statedb, create a new empty wallet for it
+		if toAccSer == nil {
+			emptyWallet := StateValueStruct {
+				Balance: 	0,
+				Nonce: 		0,
+			}
+
+			// serialize empty wallet
+			emptyWalletSer, err := StateDbStructToBytes(emptyWallet)
+			if err != nil {
+				logger.L.Panicf("%v\n", err)
+			}
+
+			// set it
+			toAccSer = emptyWalletSer
+		} 
+		// if the 'To' wallet does already exist even better, nothing more to do
+
+	} else { // if this function is called with the bool toggle to false, then use passed pseudo states instead of reading from statedb
+		fromAccSer = pseudoStateFrom
+		toAccSer = pseudoStateTo
 	}
 
+
+	// 3. ensure that From Balance >= Amount+Fee
 	//		deserialize/unmarshal
 	var fromAcc StateValueStruct
 	err = msgpack.Unmarshal(fromAccSer, &fromAcc)
@@ -786,7 +863,7 @@ func StateDbTransactionIsAllowed(t transaction.Transaction) (error, string, []by
 		Nonce:		t.Nonce,
 	}
 	//		serialize it
-	tFromValNewSer, err := msgpack.Marshal(&tFromValNew)
+	tFromValNewSer, err := StateDbStructToBytes(tFromValNew)
 	if err != nil {
 		logger.L.Panic(err)
 	}
@@ -795,46 +872,23 @@ func StateDbTransactionIsAllowed(t transaction.Transaction) (error, string, []by
 
 
 	// TO:
-	// 		determine amount of tokens 'To' has after transaction, if address does not exist transaction will be performed anyways (it will then exist)
-	//			try to look up 'To' address in statedb
-	toValCur, err := ReadFromBucket(t.To, "statedb")
+	// 		determine amount of tokens 'To' has after transaction
+	//			first deser toAccSer
+	toWallet, err := StateDbBytesToStruct(toAccSer)
+	if err != nil {
+		logger.L.Panicf("%v\n", err)
+	}
+	//			set new balance
+	toWallet.Balance = t.Value
+
+	// serialize it again
+	toAccSer, err = StateDbStructToBytes(toWallet)
 	if err != nil {
 		logger.L.Panic(err)
 	}
-	//			if receiver address does not exist already in statedb
-	if toValCur == nil {
-		// 				create it with new balance and nonce of 0
-		tToValNew := StateValueStruct {
-			Balance: 	t.Value,
-			Nonce: 		0,
-		}
-		//				serialize it
-		toValNewSer, err := msgpack.Marshal(&tToValNew)
-		if err != nil {
-			logger.L.Panic(err)
-		}
-		//				store the value that would result from this transaction in the variable that will later be returned
-		toNewValAfterTrans = append(toNewValAfterTrans, toValNewSer...)
 
-
-	} else { //	otherwise (receiver already exists in statedb) calculate new balance by deserializing current value and updating it, then write to statedb
-		//				deserialize current value
-		var toValCurDeser StateValueStruct
-		err = msgpack.Unmarshal(toValCur, &toValCurDeser)
-		if err != nil {
-			logger.L.Panicf("Failed to deserialize 'To' address current statedb value: %v", err)
-		}
-		//				calculate new balance
-		toValCurDeser.Balance += t.Value
-		//				serialize again
-		toValNewSer, err := msgpack.Marshal(&toValCurDeser)
-		if err != nil {
-			logger.L.Panic(err)
-		}
-		//				store the value that would result from this transaction in the variable that will later be returned
-		toNewValAfterTrans = append(toNewValAfterTrans, toValNewSer...)
-
-	}
+	//	store the 'To' value that would result from this transaction in the variable that will later be returned
+	toNewValAfterTrans = append(toNewValAfterTrans, toAccSer...)
 
 	// This function returns the following values:
 	//		bool:	is this transaction valid?
