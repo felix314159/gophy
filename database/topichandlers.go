@@ -211,30 +211,36 @@ func TopicNewBlockReceiveEvent(m pubsub.Message, h host.Host, ctx context.Contex
 	//		accepted solutionHash (until now a node that is not a miner might only know H(solutionHash) from other miner's commitments but not solutionHash itself)
 	acceptedSolutionHash := recBlockFull.BlockHeader.BlockWinner.SolutionHash.GetString()
 
-	// 2. determine eligible winner nodes one of which later will be chosen block winner
-	eligibleActiveMiners := BlockProblemHelper.DetermineEligibleMiners(acceptedSolutionHash)
-	amountEligibleMiners := len(eligibleActiveMiners)
+	// only verify winner selection when you have completed your initial sync (otherwise you are still in initial sync which means you have ignored miner commitments so far and can't agree on selection)
+	if didReceiveLiveData {
+		// 2. determine eligible winner nodes one of which will be chosen block winner
+		eligibleActiveMiners := BlockProblemHelper.DetermineEligibleMiners(acceptedSolutionHash)
+		amountEligibleMiners := len(eligibleActiveMiners)
 
-	var winnerNodeAddress string
+		var winnerNodeAddress string
 
-	if amountEligibleMiners > 1 {
-		// perform non-trivial winner selection
-		winnerNodeAddress = WinnerSelection(eligibleActiveMiners, raCommitSec)
-		logger.L.Printf("I selected winner node: %v\n", winnerNodeAddress)
+		if amountEligibleMiners > 1 {
+			// perform non-trivial winner selection
+			winnerNodeAddress = WinnerSelection(eligibleActiveMiners, raCommitSec)
+			logger.L.Printf("I selected winner node: %v\n", winnerNodeAddress)
 
-	} else if amountEligibleMiners == 1 {
-		// winner has already been determined
-		winnerNodeAddress = eligibleActiveMiners[0].Commitment.OriginalSenderNodeID
-		logger.L.Printf("I have determined that winner selection is trivial because only one miner is eligible. Winner: %v\n", winnerNodeAddress)
-	} else { // it is impossible that you determine no node should be winner because then RA would not have created a block in the first place
-		//winnerNodeAddress = ""
-		logger.L.Panicf("I have determined that no miner is eligible for winner selection. But this contradicts with RA sending me a new block! I will panic!\n")
+		} else if amountEligibleMiners == 1 {
+			// winner has already been determined
+			winnerNodeAddress = eligibleActiveMiners[0].Commitment.OriginalSenderNodeID
+			logger.L.Printf("I have determined that winner selection is trivial because only one miner is eligible. Winner: %v\n", winnerNodeAddress)
+		} else { // it is impossible that you determine no node should be winner because then RA would not have created a block in the first place
+			//winnerNodeAddress = ""
+			logger.L.Panicf("I have determined that no miner is eligible for winner selection. But this contradicts with RA sending me a new block! I will panic!\n")
+		}
+
+		// ensure that you have chosen the same block winner as RA
+		if recBlockFull.BlockHeader.BlockWinner.WinnerAddress != winnerNodeAddress {
+			logger.L.Panicf("I have determined that the block winner should be %v but RA has determined that block winner should be %v. I will panic!", winnerNodeAddress, recBlockFull.BlockHeader.BlockWinner.WinnerAddress)
+		}
+	} else {
+		logger.L.Printf("Skipped check how winner was chosen by RA because I still have not completed my initial sync which means I did not listen to miner commitments yet. Will accept the block.\n")
 	}
 
-	// ensure that you have chosen the same block winner as RA
-	if recBlockFull.BlockHeader.BlockWinner.WinnerAddress != winnerNodeAddress {
-		logger.L.Panicf("I have determined that the block winner should be %v but RA has determined that block winner should be %v. I will panic!", winnerNodeAddress, recBlockFull.BlockHeader.BlockWinner.WinnerAddress)
-	}
 
 	// ---
 
@@ -242,7 +248,7 @@ func TopicNewBlockReceiveEvent(m pubsub.Message, h host.Host, ctx context.Contex
 	// 		get current time
 	curTimeRightNow := time.Now().UnixNano()
 	//		get msg
-	msg := fmt.Sprintf("Selected winner: %v", winnerNodeAddress)
+	msg := fmt.Sprintf("Selected winner: %v", recBlockFull.BlockHeader.BlockWinner.WinnerAddress)
 	//		construct stat to be sent
 	pStatWinner := monitoring.NewPerformanceData(curTimeRightNow, MyDockerAlias, monitoring.Event_BlockWinnerFound, msg)
 	// 		post stat
