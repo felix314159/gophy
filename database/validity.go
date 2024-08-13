@@ -380,6 +380,7 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 		    		logger.L.Panicf("BlockVerifyValidity - Failed to serialize in-memory StateValueStruct of tx receiver due to: %v\n", err)
 		    	}
 		    } else {
+		    	logger.L.Printf("BlockVerifyValidity - 'To' node %v of current transaction does not exist in map yet, creating new map element with balance 0 for it.\n", curTrans.To)
 		    	// for 'To' it is ok to not have existed before the transaction, so lets create it
 		    	toWallet := StateValueStruct {
 		    		Balance: 0,
@@ -403,7 +404,7 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 
 			// ---- Affect in-memory state (Note: Go does not allow modyfing struct fields from a map (because you would be modifying a copy not the original), so you have to calculate the new fields value and then write back the entire struct instance. Alternatively you could adjust the map to hold pointer values but then syntax becomes ugly to read and write.) ----
 
-			// deserialze resulting wallets
+			// deserialize resulting wallets
 			//		From
 			txSenderWallet, err := StateDbBytesToStruct(updatedWalletFrom)
 			if err != nil {
@@ -878,8 +879,8 @@ func StateDbTransactionIsAllowed(t transaction.Transaction, readActualStateFromD
 	if err != nil {
 		logger.L.Panicf("%v\n", err)
 	}
-	//			set new balance
-	toWallet.Balance = t.Value
+	//			add the received balance
+	toWallet.Balance += t.Value
 
 	// serialize it again
 	toAccSer, err = StateDbStructToBytes(toWallet)
