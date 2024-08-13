@@ -137,6 +137,7 @@ The following command-line flags are currently supported:
 | httpPort | 8087 | Sets the port for the locally run HTTP server used by nodes for sending transactions (localhost:8087/send-transaction) and used by RA to define and publish new block problems (localhost:8087/send-simtask). |
 | dockerAlias | mynode | Sets the temporary alias (name) of a node so that it is easy to tell nodes apart when running a large number of them on the same machine using Docker and observing their actions via the monitoring at localhost:12345. |
 | dump | nil | Allows the user to dump information of any locally stored block. You can either specify the hash of the block that should be dumped or use special values 'latest' or 'genesis' to dump the latest or oldest block information. This command does not start the node. |
+| dumpState | false | Allows a full node to dump the statedb in a human-readable format. This makes it possible to view the Balance and Nonce of all nodes. This flag can not be used by light nodes because they do not locally build the state. |
 | raMode | false | This flag is used to make the node behave as the Root Authority. This only works when you have access to the private key of the RA because each message sent must be signed and other nodes know the public key of the RA. |
 | raReset | false | This flag is used during testing/development to start the RA after resetting all blockchain data to genesis. |
 
