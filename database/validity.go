@@ -148,18 +148,24 @@ func BlockchainVerifyValidity(fullNode bool, measurePerformance bool) error {
 		if err != nil {
 			return fmt.Errorf("BlockchainVerifyValidity - %v\n", err)
 		}
-		// unmarshal
+		// unmarshal so that you print the block if it turns out to be problematic
 		var newBlock block.Block
+		var newBlockHeader block.Header
 		if fullNode {
 			newBlock = FullBlockBytesToBlock(newBlockBytes)
+			newBlockHeader = newBlock.BlockHeader
+		} else {
+			newBlockHeader, _ = HeaderBytesToBlockLight(newBlockBytes)
 		}
 		
 		// checks validity of new block (can new block be valid continuation of previous block)
 		err = BlockVerifyValidity(fullNode, prevBlockBytes, newBlockBytes, fullNode)
 		if err != nil {
-			// display block that makes problems
+			// display block or header that makes problems
 			if fullNode {
 				PrintBlock(newBlock)
+			} else {
+				PrintBlockHeader(newBlockHeader)
 			}
 			
 			return fmt.Errorf("BlockchainVerifyValidity - %v\n", err)
@@ -249,7 +255,7 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 		if newBlockIsFull { // case: light node received new full block that the RA just broadcast
 			newBlock = FullBlockBytesToBlock(new)
 			newBlockHeader = newBlock.BlockHeader
-		} else {
+		} else { // case: after completing initial sync, the light node who only stores the headers, has passed the header to this function
 			newBlockHeader, _ = HeaderBytesToBlockLight(new) // case: during inital sync light node has requested header from some node
 		}
 		
@@ -283,7 +289,7 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 	
 	// 3.5 Token amount that is awarded to block winner has been calculated correctly
 	correctReward := winner.GetTokenRewardForBlock(newBlockHeader.BlockID)
-	if newBlock.BlockHeader.BlockWinner.TokenReward != correctReward {
+	if newBlockHeader.BlockWinner.TokenReward != correctReward {
 		return fmt.Errorf("BlockVerifyValidity - Validity check failed: Wrong reward for block winner! Expected award to be %v tokens but got %v tokens.", correctReward, newBlock.BlockHeader.BlockWinner.TokenReward)
 	}
 

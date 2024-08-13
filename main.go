@@ -8,7 +8,7 @@ import (
 	"github.com/felix314159/gophy/database"
 	"github.com/felix314159/gophy/logger"
 
-			/*  this entire block is commented out when you want to use pseudo.go for getting large pseudo blockchain for testing
+	//		/*  this entire block is commented out when you want to use pseudo.go for getting large pseudo blockchain for testing
 	"context"
 	"crypto/ed25519"
 	"flag"
@@ -32,7 +32,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
-			*/
+	//		*/
 )
 
 const version = "v0.9.19-alpha"
@@ -47,7 +47,7 @@ const version = "v0.9.19-alpha"
 // Note: This is a development version where RA has 30k tokens pre-allocated in genesis block. Needs to be removed before production usage.
 
 func main() {
-			/*
+	//		/*
 
 	// ---- Create database folder if it does not exist already ----
 	simsol.CreateFolder(filepath.Join(".", "database"))
@@ -519,7 +519,7 @@ func main() {
 	// keep node running (otherwise if main terminates all goroutines are killed)
 	select {}
 
-			*/
+	//		*/
 
 
 	// err := database.CreatePseudoBlockchainLight(10)
@@ -529,11 +529,11 @@ func main() {
 	// logger.L.Printf("Created light blockchain.")
 
 
-	err := database.CreatePseudoBlockchainFull(10, "supersecretrapw", 20)								
-	if err != nil {
-		logger.L.Panic(err)
-	}
-	logger.L.Printf("Created full blockchain.")
+	// err := database.CreatePseudoBlockchainFull(10, "supersecretrapw", 20)								
+	// if err != nil {
+	// 	logger.L.Panic(err)
+	// }
+	// logger.L.Printf("Created full blockchain.")
 
 }
 
