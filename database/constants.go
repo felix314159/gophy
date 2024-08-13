@@ -32,8 +32,8 @@ const (
 	// genesisHash is the hash of the genesis block that every node agrees to start with (TODO: if you remove 30k RA prealloc from gen also update this hash)
 	genesisHash = "4d5e17d3bd7a33d83e31927ea33ffad143f8d95d0063a5cc80e0dbc1e77e5d51"
 
-	// DebugLogging affects how much data is being logged, setting it to true results in a slightly more verbose log file
-	DebugLogging = true
+	// DebugLogging affects how much data is being logged, setting it to true results in a huge log file because all state and state merkle related info is logged
+	DebugLogging = false
 
 	// SyncMode is an alias for int which is used as a kind of enum that does not exist in Go (remember to add new stuff also to stringer interface in transport.go)
 	SyncMode_Initial_Full	 	Mode = iota + 1 // ensure to NOT start at 0 because that is the nil value of int which could lead to confusing problems

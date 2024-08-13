@@ -402,7 +402,7 @@ func SyncNode(ctx context.Context, h host.Host) {
 	
 	err = BlockchainVerifyValidity(IAmFullNode, false) // also affects statedb
 	if err != nil {
-		logger.L.Panicf("Chaindb or statedb is NOT valid. It is recommended that you restart with -reset=true parameter! Error: %v", err)
+		logger.L.Panicf("Chaindb or statedb is NOT valid. It is recommended that you restart your node with an Initial sync! Error: %v", err)
 	} 
 	
 	logger.L.Printf("\nSuccessfully verfied validity of chaindb and built statedb.\n")
