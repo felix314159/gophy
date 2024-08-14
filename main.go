@@ -529,7 +529,7 @@ func main() {
 	// logger.L.Printf("Created light blockchain.")
 
 
-	// err := database.CreatePseudoBlockchainFull(10, "supersecretrapw", 20)								
+	// err := database.CreatePseudoBlockchainFull(100, "supersecretrapw", 200)								
 	// if err != nil {
 	// 	logger.L.Panic(err)
 	// }

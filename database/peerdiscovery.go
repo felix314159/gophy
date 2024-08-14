@@ -110,7 +110,13 @@ func DiscoverPeers(ctx context.Context, h host.Host, ch chan bool) {
 			//			2. determine event type (i could split the event report into two and put them above in the if-else to avoid repeating this check but IMO this negatively affects code readability)
 			var eventType monitoring.Event
 			if len(myConnectedPeers) == 1 {
-				eventType = monitoring.Event_FirstPeerConnected
+				// if the first node you connect to is the RA, you should report the RAConnected event instead of the FirstPeerConnected event
+				if justConnectedToThisNode == RANodeID {
+					eventType = monitoring.Event_RAConnected
+				} else {
+					eventType = monitoring.Event_FirstPeerConnected
+				}
+				
 			} else if justConnectedToThisNode == RANodeID { // RA would never trigger this because self-connections were already triggering 'continue' earlier
 				eventType = monitoring.Event_RAConnected
 			} else {
