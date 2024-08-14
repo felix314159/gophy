@@ -175,19 +175,27 @@ func (s *SyncHelperStruct) MapAdd(data []byte, mapKey string, senderNodeIDstring
 	val, existsAlready := s.Data[mapKey]
 	// if key already existed, increase int by 1
 	if existsAlready {
-		logger.L.Printf("MapAdd - Received data confirmation (hash was already seen before) from node %v and will increase counter of SyncHelper.Data[%v]\n", senderNodeIDstring, mapKey)
+		// debug
+		if DebugLogging {
+			logger.L.Printf("MapAdd - Received data confirmation (hash was already seen before) from node %v and will increase counter of SyncHelper.Data[%v]\n", senderNodeIDstring, mapKey)
+		}
+		
 		val.ConfirmationsCur++      // modify a copy of the map element
 		s.Data[mapKey] = val // now assign the copy to the ACTUAL element (without this line counter is not permanently increased)
 	} else { // otherwise set int to 1
-		logger.L.Printf("MapAdd - Received new data (hash not seen before) from node %v and will add it to SyncHelper.Data[%v]\n", senderNodeIDstring, mapKey)
-		
+		// debug
+		if DebugLogging {
+			logger.L.Printf("MapAdd - Received new data (hash not seen before) from node %v and will add it to SyncHelper.Data[%v]\n", senderNodeIDstring, mapKey)
+			logger.L.Printf("Added hash of received blockhash StringSlice to SyncHelper map.")
+		}
+
 		s.Data[mapKey] = struct {
 			ConfirmationsCur	int
 			Data				[]byte
 		}{ConfirmationsCur: 1, Data: data}
 
-		logger.L.Printf("Added hash of received blockhash StringSlice to SyncHelper map.")
 	}
+
 }
 
 // MapCheckIfConfirmationsReached checks if any piece of data has been received often enough to be accepted, then returns true and the accepted data.

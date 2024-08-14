@@ -387,7 +387,11 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 		    		logger.L.Panicf("BlockVerifyValidity - Failed to serialize in-memory StateValueStruct of tx receiver due to: %v\n", err)
 		    	}
 		    } else {
-		    	logger.L.Printf("BlockVerifyValidity - 'To' node %v of current transaction does not exist in map yet, creating new map element with balance 0 for it.\n", curTrans.To)
+		    	// debug
+		    	if DebugLogging {
+		    		logger.L.Printf("BlockVerifyValidity - 'To' node %v of current transaction does not exist in map yet, creating new map element with balance 0 for it.\n", curTrans.To)
+		    	}
+		    	
 		    	// for 'To' it is ok to not have existed before the transaction, so lets create it
 		    	toWallet := StateValueStruct {
 		    		Balance: 0,
