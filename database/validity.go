@@ -96,8 +96,9 @@ func SimtaskValidityCheck(s simpar.SimulationTask, h block.Header) error {
 
 // BlockchainVerifyValidity goes through every block in the local blockchain and ensures that the chaindb data is valid.
 // It then tries to locally build the statedb from the given chaindb data, this means calling BlockchainVerifyValidity() does affect the state!
-// Note: Blocks being 'valid' means that the chain of blocks abides to certain rules (block ID + 1, timestamp <=, ...) and that the statedb was affected according to the data found in chaindb blocks.
 // Return an error that is only nil when the blockchain is valid, otherwise returns an error that describes why the blockchain is not valid.
+// Note: Blocks being 'valid' means that the chain of blocks abides to certain rules (block ID + 1, timestamp <=, ...) and that the statedb was affected according to the data found in chaindb blocks.
+// Note 2: This function assumes that the chaindb is fully populated and that the statedb is not populated yet.
 func BlockchainVerifyValidity(fullNode bool, measurePerformance bool) error {
 	// get list of all chaindb block hashes (starting with block id 0, 1, 2...)
 	blockHashStringListAsc, err := GetAllBlockHashesAscending(fullNode)
@@ -506,18 +507,19 @@ func BlockVerifyValidity(fullNode bool, prev []byte, new []byte, newBlockIsFull 
 
 	}
 
-	// whether further checks happen depends on whether node has already completed its initial sync and populated the BPH or not (these checks also won't happen during pseudo.go simulation)
-	// so for this reason, check whether the BPH is populated or not to determine this
+
+	// whether further checks happen depends on whether node has already completed its initial sync and populated the BPH or not
 	curProblemID := BlockProblemHelper.GetProblemID()
-	if len(curProblemID.Bytes) > 0 {
-		// ok your BPH is populated so you can perform additional checks
-	
-		//		8. SimulationTask chosen correctly by RA? As in, does the unique problem ID in my BPH agree with what is in block just received by RA?
+	curProblemExpiration := BlockProblemHelper.GetProblemExpirationTime()
+	if didReceiveLiveData && len(curProblemID.Bytes) > 0 && curProblemExpiration > 0 { // ensure current BPH is populated with non-zero value values
+		// your BPH is populated, so you can check whether the newly received block fits for what until now was the current block problem (does the unique problem ID in my BPH agree with what is in block just received by RA)	
 		if curProblemID.GetString() != newBlock.SimulationTask.ProblemHash.GetString() {
 			return fmt.Errorf("BlockVerifyValidity - Block invalid because its unique problem ID should be %v [according to my BPH] but the block includes one with ProblemHash %v\n", curProblemID.GetString(), newBlock.SimulationTask.ProblemHash.GetString())
 		}
 
 	}
+
+
 
 	logger.L.Printf("BlockVerifyValidity - Block with ID %v has passed all validity checks.\n", newBlockHeader.BlockID)
 	
