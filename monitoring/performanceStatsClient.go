@@ -15,7 +15,7 @@ import (
 // get message to send
 curtime := time.Now().UnixNano()
 sender 	:= "1f"
-eventtype := Event_InititalSyncCompleted
+eventtype := Event_InitialSyncCompleted
 msg := "test"
 p := NewPerformanceData(curtime, sender, eventtype, msg)
 

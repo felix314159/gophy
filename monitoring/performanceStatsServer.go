@@ -110,8 +110,9 @@ const (
 	Event_FirstPeerConnected        					// you have connected to your first peer (Note: If this peer is the RA the event RAConnected will not be reported again)
 	Event_NewPeerConnected								// you have connected to a new peer (but it is not your first one)
 	Event_RAConnected 									// you have connected to the RA
-	Event_InitialSyncAlmostCompleted  					// you have synced to other nodes but you do not know the current BPH or currently pending transactions. You will still need to request them
-	Event_InititalSyncCompleted 						// you have completed your initial sync
+	Event_InitialSyncChaindbReceived                    // you have received all chaindb data and as next step will verify it (full nodes will build entire state after this to be able to verify it)
+	Event_InitialSyncChaindbVerified  					// you have synced to other nodes but you do not know the current BPH or currently pending transactions. You will still need to request them
+	Event_InitialSyncCompleted 							// you have completed your initial sync
 	Event_SimtaskReceived 								// you have a new simtask (new block problem) from the RA
 	Event_TransactionReceived 							// you have received a new transaction via topic
 	Event_MinerCommitReceived 							// you have received a new miner commitment (a miner claims to have solved the current block problem and provides 'zero' knowledge proof)
@@ -137,10 +138,12 @@ func (e Event) String() string {
 		return "Event_NewPeerConnected"
 	case Event_RAConnected:
 		return "Event_RAConnected"
-	case Event_InitialSyncAlmostCompleted:
-		return "Event_InitialSyncAlmostCompleted"
-	case Event_InititalSyncCompleted:
-		return "Event_InititalSyncCompleted"
+	case Event_InitialSyncChaindbReceived:
+		return "Event_InitialSyncChaindbReceived"
+	case Event_InitialSyncChaindbVerified:
+		return "Event_InitialSyncChaindbVerified"
+	case Event_InitialSyncCompleted:
+		return "Event_InitialSyncCompleted"
 	case Event_SimtaskReceived:
 		return "Event_SimtaskReceived"
 	case Event_TransactionReceived:

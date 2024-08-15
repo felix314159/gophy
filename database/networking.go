@@ -398,8 +398,6 @@ func SyncNode(ctx context.Context, h host.Host) {
 	// remember that you received all chaindb data so that you are from now on able to handle incoming blocks via the topic
 	initialSyncChaindbDataWasReceivedAlready = true
 
-	// ---- Phase 3: Initial Sync: Verify validity ----
-
 	// change nodemode to Passive (declines incoming connections) [avoids db locks while intensive task is going on]
 	if IAmFullNode {
 		SyncHelper.NodeModeWrite(SyncMode_Passive_Full)
@@ -408,6 +406,24 @@ func SyncNode(ctx context.Context, h host.Host) {
 	}
 	logger.L.Printf("Sync success.\nChecking validity of received data..\n")
 	
+	// ---- Performance stat reporting for  Event_InitialSyncChaindbReceived ----
+
+	// report performance stat
+	// 		get current time
+	curTimeRightNow := time.Now().UnixNano()
+	//		construct stat to be sent
+	pStatReceived := monitoring.NewPerformanceData(curTimeRightNow, MyDockerAlias, monitoring.Event_InitialSyncChaindbReceived, "foo") // no field can be empty so put bogus message
+	// 		post stat
+	err = monitoring.SendPerformanceStatWithRetries(pStatReceived)
+	if err != nil {
+		logger.L.Printf("Warning - Failed to report performance stat: %v", err)
+	}
+
+	// ----
+
+	// ---- Phase 3: Initial Sync: Verify validity ----
+
+
 	err = BlockchainVerifyValidity(IAmFullNode, false) // also affects statedb
 	if err != nil {
 		logger.L.Panicf("Chaindb or statedb is NOT valid. It is recommended that you restart your node with an Initial sync! Error: %v", err)
@@ -418,13 +434,13 @@ func SyncNode(ctx context.Context, h host.Host) {
 	// set amount of required data confirmations back to initial value that was passed from main.go
 	SyncHelper.ConfirmationsReqWrite(initialConfReq)
 
-	// ---- Performance stat reportinng ----
+	// ---- Performance stat reporting ----
 
-	// report performance stat for InitialSyncAlmostCompleted
+	// report performance stat for Event_InitialSyncChaindbVerified
 	// 		get current time
-	curTimeRightNow := time.Now().UnixNano()
+	curTimeRightNow = time.Now().UnixNano()
 	//		construct stat to be sent
-	pStat := monitoring.NewPerformanceData(curTimeRightNow, MyDockerAlias, monitoring.Event_InitialSyncAlmostCompleted, "foo") // no field can be empty so put bogus message
+	pStat := monitoring.NewPerformanceData(curTimeRightNow, MyDockerAlias, monitoring.Event_InitialSyncChaindbVerified, "foo") // no field can be empty so put bogus message
 	// 		post stat
 	err = monitoring.SendPerformanceStatWithRetries(pStat)
 	if err != nil {
@@ -498,11 +514,11 @@ func SyncNode(ctx context.Context, h host.Host) {
 
 	// ---- Performance stat reportinng ----
 
-	// report performance stat for InitialSyncAlmostCompleted
+	// report performance stat for Event_InitialSyncCompleted
 	// 		get current time
 	curTimeRightNow2 := time.Now().UnixNano()
 	//		construct stat to be sent
-	pStat2 := monitoring.NewPerformanceData(curTimeRightNow2, MyDockerAlias, monitoring.Event_InititalSyncCompleted, "foo") // no field can be empty so put bogus message
+	pStat2 := monitoring.NewPerformanceData(curTimeRightNow2, MyDockerAlias, monitoring.Event_InitialSyncCompleted, "foo") // no field can be empty so put bogus message
 	// 		post stat
 	err = monitoring.SendPerformanceStatWithRetries(pStat2)
 	if err != nil {
