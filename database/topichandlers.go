@@ -84,8 +84,10 @@ func TopicReceiveMessage(ctx context.Context, sub *pubsub.Subscription, h host.H
 			continue
 		}
 
-		logger.L.Printf("Topic: %v - Received data from %v.\n", t, m.ReceivedFrom) // no need to print Sender either as its always RA if accepted or it will be declined anyways
-
+		if DebugLogging {
+			logger.L.Printf("Topic: %v - Received data from %v.\n", t, m.ReceivedFrom)
+		}
+		
 		// depending on which topic msg was received from call responsible function to handle content
 		// these calls should be handled in goroutines so use go keyword
 		if t == "pouw_chaindb" {
@@ -557,7 +559,10 @@ func TopicChaindbReceiveEvent(m pubsub.Message, h host.Host, ctx context.Context
 	// in other words: you only not ignore these requests, if you are in any continuous mode
 	curSyncMode := SyncHelper.NodeModeGet() // this function uses a mutex that is separate from the other SyncHelper mutex (networkingMutex) to avoid unnecessary locking
 	if !(  (curSyncMode == SyncMode_Continuous_Full) || (curSyncMode == SyncMode_Continuous_Light) || (curSyncMode == SyncMode_Continuous_Mine)  ) {
-		logger.L.Printf("I am not in a continuous mode, that's why I will ignore this chaindb topic request.")
+		if DebugLogging {
+			logger.L.Printf("I am not in a continuous mode, that's why I will ignore this chaindb topic request.")
+		}
+		
 		return // ignore incoming chaindb topic receive event
 	}
 
