@@ -287,14 +287,14 @@ func SyncNode(ctx context.Context, h host.Host, initialSyncDone chan struct{}) {
 	acceptedDataChannel := make(chan []byte)
     go waitForData(acceptedDataChannel)
 
-    // 		re-request interval: 10 sec
-    reRequestDataTicker := time.NewTicker(10 * time.Second)
+    // 		re-request interval: 22 sec
+    reRequestDataTicker := time.NewTicker(22 * time.Second)
 
     acceptedData := func() []byte {
         for {
             select {
-            case <-reRequestDataTicker.C: // ticker.C is used to perform an action in regular intervals (here 10 seconds), action is send request again
-                // okay but keep attempting until sending message is successful (so you want to send 1 message every 10 sec, but if that fails you just keep retrying until you sent that 1 message)
+            case <-reRequestDataTicker.C: // ticker.C is used to perform an action in regular intervals, action is send request again
+                // okay but keep attempting until sending message is successful (so you want to send 1 message every x sec, but if that fails you just keep retrying until you sent that 1 message)
                 err := TopicSendMessage(ctx, "pouw_chaindb", bHReqTS)
                 for err != nil {
 					logger.L.Printf("Failed to send topic message: %v\nWill try again..\n", err)
@@ -302,7 +302,7 @@ func SyncNode(ctx context.Context, h host.Host, initialSyncDone chan struct{}) {
 					err = TopicSendMessage(ctx, "pouw_chaindb", bHReqTS)
 				}
 
-        	case acceptedData := <-acceptedDataChannel: // case: this is not a ticker event (every 10 sec you would not get the default case)
+        	case acceptedData := <-acceptedDataChannel: // case: this is not a ticker event (every x sec you would not get the default case)
             		logger.L.Printf("Verified blockheaders have been received.")
             		return acceptedData
         	}
