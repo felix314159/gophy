@@ -287,8 +287,8 @@ func SyncNode(ctx context.Context, h host.Host, initialSyncDone chan struct{}) {
 	acceptedDataChannel := make(chan []byte)
     go waitForData(acceptedDataChannel)
 
-    // 		re-request interval: 22 sec
-    reRequestDataTicker := time.NewTicker(22 * time.Second)
+    // 		re-request interval
+    reRequestDataTicker := time.NewTicker(4 * time.Second)
 
     acceptedData := func() []byte {
         for {
@@ -358,8 +358,8 @@ func SyncNode(ctx context.Context, h host.Host, initialSyncDone chan struct{}) {
 		// wait until data of interest has been received
 	    go waitForDataWithHash(blockHashString, acceptedDataChannel)
 
-	    // 		re-request interval: 10 sec (if after 10 sec the data of interest has not been received, request it again)
-	    reRequestBlockDataTicker := time.NewTicker(10 * time.Second)
+	    // 		re-request interval (if after this many sec the data of interest has not been received, request it again)
+	    reRequestBlockDataTicker := time.NewTicker(1 * time.Second)
 
 	    recData := func() []byte {
 	        for {
