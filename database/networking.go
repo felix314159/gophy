@@ -283,17 +283,19 @@ func SyncNode(ctx context.Context, h host.Host) {
 	// 		3. wrap in TS
 	bHReqTS := NewTransportStruct(TSData_ChainDBRequest, MyNodeIDString, bHReqSer)
 
-	// 4. repeatedly keep requesting blockHeaders every 10 seconds until enough responses have been collected
+	// 4. repeatedly keep requesting blockHeaders in regular intervals until enough responses have been collected
 	acceptedDataChannel := make(chan []byte)
     go waitForData(acceptedDataChannel)
 
-    // 		request interval: 10 sec
-    ticker := time.NewTicker(10 * time.Second)
+    // 		re-request interval: 10 sec
+    reRequestDataTicker := time.NewTicker(10 * time.Second)
+    // 		check if data was received interval: 20 ms
+    wasDataReceivedByNowInterval := 20 * time.Millisecond
 
     acceptedData := func() []byte {
         for {
             select {
-            case <-ticker.C: // ticker.C is used to perform an action in regular intervals (here 10 seconds), action is send request again
+            case <-reRequestDataTicker.C: // ticker.C is used to perform an action in regular intervals (here 10 seconds), action is send request again
                 // okay but keep attempting until sending message is successful (so you want to send 1 message every 10 sec, but if that fails you just keep retrying until you sent that 1 message)
                 err := TopicSendMessage(ctx, "pouw_chaindb", bHReqTS)
                 for err != nil {
@@ -301,9 +303,17 @@ func SyncNode(ctx context.Context, h host.Host) {
 					RandomShortSleep()
 					err = TopicSendMessage(ctx, "pouw_chaindb", bHReqTS)
 				}
-            case acceptedData := <-acceptedDataChannel:
-                logger.L.Printf("Verified blockheaders have been received.")
-                return acceptedData
+            // case acceptedData := <-acceptedDataChannel:
+            //     logger.L.Printf("Verified blockheaders have been received.")
+            //     return acceptedData
+        	default: // case: this is not a ticker event (every 10 sec you would not get the default case)
+        		time.Sleep(wasDataReceivedByNowInterval) // sleep a bit to not exhaust CPU
+
+        		select { // in these more regular intervals (here 20ms), check whether the data was received already
+        		case acceptedData := <-acceptedDataChannel:
+            		logger.L.Printf("Verified blockheaders have been received.")
+            		return acceptedData
+        		}
 
             }
         }
@@ -358,13 +368,14 @@ func SyncNode(ctx context.Context, h host.Host) {
 		// wait until data of interest has been received
 	    go waitForDataWithHash(blockHashString, acceptedDataChannel)
 
-	    // 		request interval: 10 sec (if after 10 sec the data of interest has not been received, request it again)
-	    ticker := time.NewTicker(10 * time.Second)
+	    // 		re-request interval: 10 sec (if after 10 sec the data of interest has not been received, request it again)
+	    reRequestBlockDataTicker := time.NewTicker(10 * time.Second)
+	    //		check whether data has been received interval is still 20 ms (wasDataReceivedByNowInterval)
 
 	    recData := func() []byte {
 	        for {
 	            select {
-	            case <-ticker.C:
+	            case <-reRequestBlockDataTicker.C:
 	                // send request for this piece of block data, repeat if it fails
 	                err := TopicSendMessage(ctx, "pouw_chaindb", haindbReqTS)
 	                for err != nil {
@@ -373,11 +384,22 @@ func SyncNode(ctx context.Context, h host.Host) {
 						err = TopicSendMessage(ctx, "pouw_chaindb", haindbReqTS)
 					}
 				// as soon as data with correct hash has been received stop requesting this piece of data and move on to the next block / header of interest
-	            case acceptedData = <-acceptedDataChannel:
-	                logger.L.Printf("Received data for block with hash %v.", blockHashString)
-	                return acceptedData
-	            }
-	        }
+	            
+	            // case acceptedData = <-acceptedDataChannel:
+	            //     logger.L.Printf("Received data for block with hash %v.", blockHashString)
+	            //     return acceptedData
+	            // }
+		        default:
+		        	time.Sleep(wasDataReceivedByNowInterval)
+
+		        	select {
+		        		case acceptedData = <-acceptedDataChannel:
+		                logger.L.Printf("Received data for block with hash %v.", blockHashString)
+		                return acceptedData
+		            }
+
+	        	} // end of outer select
+	        } // end of for
 	    }()
 
 		// write data of this block to chaindb
