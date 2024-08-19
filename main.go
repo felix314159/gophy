@@ -37,7 +37,7 @@ import (
 
 const version = "v0.9.23-alpha"
 
-// RA Node ID:	 12D3KooWEYSb69dzeojEH1PygPWef9V1qQJqrGKUEMMsbA4keAyZ
+// Example RA Node ID:	 12D3KooWEYSb69dzeojEH1PygPWef9V1qQJqrGKUEMMsbA4keAyZ
 
 // EXAMPLE USAGE:
 //		RA: 			go run . -syncMode=SyncMode_Continuous_Full -httpPort=8097 -localKeyFile=true -raMode=true -raReset=true -pw=supersecretrapw -dockerAlias=ra
