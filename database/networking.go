@@ -115,8 +115,8 @@ type SyncHelperStruct struct {
 
 // NodeModeWrite changes the node mode by setting it to a new value. This is a write operation and must be handled with mutex.
 func (s *SyncHelperStruct) NodeModeWrite(i Mode) {
-	networkingMutex.Lock()
-	defer networkingMutex.Unlock()
+	nodeModeMutex.Lock()
+	defer nodeModeMutex.Unlock()
 
 	s.NodeMode = i
 	logger.L.Printf("Switched node mode to %v", i)
@@ -124,8 +124,8 @@ func (s *SyncHelperStruct) NodeModeWrite(i Mode) {
 
 // NodeModeGet returns the current node mode as int. Uses RLock to allow concurrent reads.
 func (s *SyncHelperStruct) NodeModeGet() Mode {
-	networkingMutex.RLock()
-	defer networkingMutex.RUnlock()
+	nodeModeMutex.RLock()
+	defer nodeModeMutex.RUnlock()
 
 	return s.NodeMode
 }

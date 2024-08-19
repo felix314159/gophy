@@ -67,6 +67,9 @@ var dbMutex sync.Mutex
 // networkingMutex is used so that concurrent reads are allowed, but not concurrent writes and also not concurrent read and write
 var networkingMutex sync.RWMutex
 
+// nodeModeMutex is used to you can check which node mode you are in without having to block all other functions that might be called on SyncHelper. This was introduced to reduce mutex locking times (tradeoff: one more mutex = one more source of errors / confusion / complexity)
+var nodeModeMutex sync.RWMutex
+
 // currentWinnerMutex for safely accessing CurrentWinner
 var currentWinnerMutex sync.Mutex
 
