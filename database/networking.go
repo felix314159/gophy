@@ -289,8 +289,6 @@ func SyncNode(ctx context.Context, h host.Host) {
 
     // 		re-request interval: 10 sec
     reRequestDataTicker := time.NewTicker(10 * time.Second)
-    // 		check if data was received interval: 20 ms
-    wasDataReceivedByNowTicker := time.NewTicker(20 * time.Millisecond)
 
     acceptedData := func() []byte {
         for {
@@ -304,15 +302,11 @@ func SyncNode(ctx context.Context, h host.Host) {
 					err = TopicSendMessage(ctx, "pouw_chaindb", bHReqTS)
 				}
 
-        	case <-wasDataReceivedByNowTicker.C: // case: this is not a ticker event (every 10 sec you would not get the default case)
-        		select {
-        		case acceptedData := <-acceptedDataChannel:
+        	case acceptedData := <-acceptedDataChannel: // case: this is not a ticker event (every 10 sec you would not get the default case)
             		logger.L.Printf("Verified blockheaders have been received.")
             		return acceptedData
-        		}
-        	
-        	} // end of outer select 
-        } // end of for
+        	}
+        }
     }()
 
 	// ----
@@ -366,8 +360,6 @@ func SyncNode(ctx context.Context, h host.Host) {
 
 	    // 		re-request interval: 10 sec (if after 10 sec the data of interest has not been received, request it again)
 	    reRequestBlockDataTicker := time.NewTicker(10 * time.Second)
-	    //		check whether data has been received interval is still 20 ms
-	    wasBlockDataReceivedByNowTicker := time.NewTicker(20 * time.Millisecond)
 
 	    recData := func() []byte {
 	        for {
@@ -382,19 +374,11 @@ func SyncNode(ctx context.Context, h host.Host) {
 					}
 				// as soon as data with correct hash has been received stop requesting this piece of data and move on to the next block / header of interest
 	            
-	            // case acceptedData = <-acceptedDataChannel:
-	            //     logger.L.Printf("Received data for block with hash %v.", blockHashString)
-	            //     return acceptedData
-	            // }
-		        case <-wasBlockDataReceivedByNowTicker.C:
-		        	select {
-		        		case acceptedData = <-acceptedDataChannel:
-		                logger.L.Printf("Received data for block with hash %v.", blockHashString)
-		                return acceptedData
-		            }
-
-	        	} // end of outer select
-	        } // end of for
+		        case acceptedData = <-acceptedDataChannel:
+		        	logger.L.Printf("Received data for block with hash %v.", blockHashString)
+		        	return acceptedData
+	        	}
+	        }
 	    }()
 
 		// write data of this block to chaindb
@@ -1168,14 +1152,15 @@ func HandleIncomingChatMessage(chatStream network.Stream, h host.Host, ctx conte
 // waitForData repeatedly checks whether a piece of received data has been verified often enough and signals with true when the data is confirmed to be valid. 
 // This is only used to initially get all blockHashes. If the blockHashes are known, there is no need for the ConfirmatedReq stuff.
 func waitForData(acceptedDataChannel chan []byte) {
-    for {
+	// run the following code every 20 ms
+    for range time.Tick(20 * time.Millisecond) {
 		confirmationsReached, data, _ := SyncHelper.MapCheckIfConfirmationsReached()
         if confirmationsReached {	
 			SyncHelper.MapReset()		// reset the map to prepare next data request process
             acceptedDataChannel <- data	// return []byte
 			return // i dont think this can be reached but doesnt matter
         }
-		time.Sleep(20 * time.Millisecond)	// checking too often is problematic cuz of mutex locking, so short timeout needed
+
     }
 }
 
