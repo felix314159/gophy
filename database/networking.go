@@ -290,7 +290,7 @@ func SyncNode(ctx context.Context, h host.Host) {
     // 		re-request interval: 10 sec
     reRequestDataTicker := time.NewTicker(10 * time.Second)
     // 		check if data was received interval: 20 ms
-    wasDataReceivedByNowInterval := 20 * time.Millisecond
+    wasDataReceivedByNowTicker := time.NewTicker(20 * time.Millisecond)
 
     acceptedData := func() []byte {
         for {
@@ -303,20 +303,16 @@ func SyncNode(ctx context.Context, h host.Host) {
 					RandomShortSleep()
 					err = TopicSendMessage(ctx, "pouw_chaindb", bHReqTS)
 				}
-            // case acceptedData := <-acceptedDataChannel:
-            //     logger.L.Printf("Verified blockheaders have been received.")
-            //     return acceptedData
-        	default: // case: this is not a ticker event (every 10 sec you would not get the default case)
-        		time.Sleep(wasDataReceivedByNowInterval) // sleep a bit to not exhaust CPU
 
-        		select { // in these more regular intervals (here 20ms), check whether the data was received already
+        	case <-wasDataReceivedByNowTicker.C: // case: this is not a ticker event (every 10 sec you would not get the default case)
+        		select {
         		case acceptedData := <-acceptedDataChannel:
             		logger.L.Printf("Verified blockheaders have been received.")
             		return acceptedData
         		}
-
-            }
-        }
+        	
+        	} // end of outer select 
+        } // end of for
     }()
 
 	// ----
@@ -370,7 +366,8 @@ func SyncNode(ctx context.Context, h host.Host) {
 
 	    // 		re-request interval: 10 sec (if after 10 sec the data of interest has not been received, request it again)
 	    reRequestBlockDataTicker := time.NewTicker(10 * time.Second)
-	    //		check whether data has been received interval is still 20 ms (wasDataReceivedByNowInterval)
+	    //		check whether data has been received interval is still 20 ms
+	    wasBlockDataReceivedByNowTicker := time.NewTicker(20 * time.Millisecond)
 
 	    recData := func() []byte {
 	        for {
@@ -389,9 +386,7 @@ func SyncNode(ctx context.Context, h host.Host) {
 	            //     logger.L.Printf("Received data for block with hash %v.", blockHashString)
 	            //     return acceptedData
 	            // }
-		        default:
-		        	time.Sleep(wasDataReceivedByNowInterval)
-
+		        case <-wasBlockDataReceivedByNowTicker.C:
 		        	select {
 		        		case acceptedData = <-acceptedDataChannel:
 		                logger.L.Printf("Received data for block with hash %v.", blockHashString)
