@@ -360,6 +360,10 @@ func SyncNode(ctx context.Context, h host.Host, initialSyncDone chan struct{}) {
 	    // 		set re-request interval (if after this many sec the data of interest has not been received, request it again)
 	    reRequestBlockDataTicker := time.NewTicker(4 * time.Second)
 
+	    // send the first data request NOW and idc whether we receive a reply or not, if it works it works and if it doesn't it will wait reRequestBlockDataTicker seconds and try again repeatedly from that point on.
+	    // the line below is very important, otherwise it would first wait reRequestBlockDataTicker seconds for no reason until it sends the first request
+	    TopicSendMessage(ctx, "pouw_chaindb", haindbReqTS)
+
 	    recData := func() []byte {
 	        for {
 	            select {
