@@ -1188,7 +1188,7 @@ func waitForDataWithHash(expectedBlockHashString string, acceptedDataChannel cha
 // waitForCommitment repeatedly checks whether a valid commitment of a specified miner address has successfully been received for a given problem.
 // Returns true if valid commitment is found in time, return false when the current block problem changes before a valid commitment was received.
 func waitForCommitment(commitmentAvailable chan bool, relevantProblemID string, minerAddress string) {
-    for {
+    for range time.Tick(500 * time.Millisecond) {
     	// if no valid commitment was received before the block problem changes, return false
     	currentProblemID := BlockProblemHelper.GetProblemID().GetString()
     	if currentProblemID != relevantProblemID {
@@ -1203,8 +1203,6 @@ func waitForCommitment(commitmentAvailable chan bool, relevantProblemID string, 
 			return // i dont think this can be reached but doesnt matter
         }
 
-        // if not, wait a bit and check again
-		time.Sleep(2 * time.Second)	// checking every 2 seconds is often enough
     }
 }
 
