@@ -266,7 +266,7 @@ func (s *SyncHelperStruct) SendersIsNew(newSender string) bool {
 // 		Phase 3: When all blocks are received the blockchain is checked for validity (builds statedb too).
 // Then you switch to the final sync mode (there are flowcharts that define which initial mode ends up in which final mode):
 //   	Phase 4: Then the nodes switches to its final sync mode which affects how it will behave.
-func SyncNode(ctx context.Context, h host.Host) {
+func SyncNode(ctx context.Context, h host.Host, initialSyncDone chan struct{}) {
 	// ---- Phase 1: Initial Sync: Get blockHeaders ----
 
 	// get initial ConfirmationsReq that was passed
@@ -539,6 +539,9 @@ func SyncNode(ctx context.Context, h host.Host) {
 			logger.L.Printf("Will not start mining right away because the current block problem expires soon.\n")
 		}
 	}
+
+	// give signal that initial sync has been completed
+	initialSyncDone <- struct{}{}
 
 }
 

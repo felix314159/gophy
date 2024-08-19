@@ -493,7 +493,7 @@ func main() {
 	// its very important the these lines below are placed after you subscribed to all topics, otherwise topic messages get ignored (i think when you discover a peer you ask it 'what topics do you care about', so when the subscribing-to-topics would happen after peer discovery no one would receive topic messages because it would not be known that these nodes are subscribed to these topics so no one would try to propagate topic messages to them)
 	ch := make(chan bool)					// unbuffered channel for bool used so that node waits until peers have been discovered before continuing
 	go database.DiscoverPeers(ctx, h, ch)	// find peers using DHT bootstrap servers + Rendezvous
-	<-ch	// wait until you read sth from DiscoverPeers
+	<-ch	// wait until you find the min amount of required peers
 	logger.L.Printf("Initial peer discovery completed!")	// continue with program flow (but the discovery keeps running in background and is still looking for new peers)
 
 
@@ -508,11 +508,14 @@ func main() {
 		go database.RALoop(ctx)
 
 	} else {
-		// All other nodes run networking entry function SyncNode
+		// all non-RA nodes start their initial sync
 		logger.L.Printf("Starting initial sync..")
-		database.SyncNode(ctx, h)
+		
+		initialSyncDone := make(chan struct{})
+		go database.SyncNode(ctx, h, initialSyncDone)
+		<-initialSyncDone // wait for initial sync to complete
 
-		// After completing initial sync you are connected to enough peers and able to receive transactions or simtasks via the locally hosted websites, so start the http server as goroutine (you should not be allowed to send transactions before you are in sync with the others)
+		// after completing initial sync you are connected to enough peers and able to receive transactions or simtasks via the locally hosted websites, so start the http server as goroutine (you should not be allowed to send transactions before you are in sync with the others)
 		go httpapi.RunServer()	
 	}
 
