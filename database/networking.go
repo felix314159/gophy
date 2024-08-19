@@ -1166,7 +1166,7 @@ func waitForData(acceptedDataChannel chan []byte) {
 
 // waitForDataWithHash keeps checking whether a requested piece of data has been received yet. When received, it returns that data via the the []byte channel acceptedDataChannel.
 func waitForDataWithHash(expectedBlockHashString string, acceptedDataChannel chan []byte) {
-    for {
+    for range time.Tick(20 * time.Millisecond) {
     	// only 1 confirmation needed when you already know which hash you need
 		confirmationsReached, data, hashString := SyncHelper.MapCheckIfConfirmationsReached()
 		// ok we received block data
@@ -1181,7 +1181,6 @@ func waitForDataWithHash(expectedBlockHashString string, acceptedDataChannel cha
 			SyncHelper.MapReset()
 
         }
-		time.Sleep(20 * time.Millisecond)	// checking too often is problematic cuz of mutex locking, so short timeout needed
     }
 }
 
