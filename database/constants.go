@@ -20,8 +20,8 @@ const (
 	// RendezvousString is the rendezvous string for initial node discovery
 	RendezvousString = "gophypouwblockchain"
 
-	// BlockTime is the interval at which RA broadcasts new problems and ideally creates new blocks. 86400 sec is around one day, for debugging use sth like 300 sec which is 5min
-	BlockTime = 300
+	// BlockTime is the interval at which RA broadcasts new problems and ideally creates new blocks. 86400 sec is around one day, for running tests i will use 1200 (20 min block time which is much faster than production target)
+	BlockTime = 1200
 
 	// TransactionsPerBlockCap is the Transactions per Block Upper Cap (each block can contain up to this many transactions)
 	TransactionsPerBlockCap = 4757 // rough estimate rationale can be found in transaction.go
