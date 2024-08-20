@@ -532,6 +532,9 @@ func SyncNode(ctx context.Context, h host.Host, initialSyncDone chan struct{}) {
 		logger.L.Printf("Warning - Failed to report performance stat: %v", err)
 	}
 
+	// give signal that initial sync has been completed
+	initialSyncDone <- struct{}{}
+
 	// ----
 
 	// if you are a miner, start mining now but only if there is more than x seconds left to solve the problem
@@ -540,14 +543,94 @@ func SyncNode(ctx context.Context, h host.Host, initialSyncDone chan struct{}) {
 	if finalSyncMode == SyncMode_Continuous_Mine {
 		curSimtask := BlockProblemHelper.GetSimulationTask()
 		if curSimtask.SimHeader.ExpirationTime > 0 && (curSimtask.SimHeader.ExpirationTime > curTime + minTimeLeftUntilProblemExpiry) {
-			curSimtask.RunSimulation()
-		} else {
+			// before starting to work on the current blockproblem store some info about it so that when you finished you can check whether this is still the currently active problem
+			oldCurPrblmID := BlockProblemHelper.GetProblemID().GetString()
+			oldCurExpTime := BlockProblemHelper.GetProblemExpirationTime()
+
+			// run simulation
+			blockProblemSolutionSer, solHash, err := curSimtask.RunSimulation()
+			if err != nil {
+				logger.L.Panic(err)
+			}
+
+			// check whether the problem was solved in time (current timestamp < expiration timestamp && memoryProblemID == currentProblemID [ensure problem has not been updated already which also would have renewed the timestamp])
+			currentProblemID := BlockProblemHelper.GetProblemID().GetString()
+			if oldCurPrblmID != currentProblemID {
+				logger.L.Printf("I solved the block problem with ID %v but I was too slow: In the meantime I already received a new block problem with ID %v and for this reason I will discard my solution.\n", oldCurPrblmID, currentProblemID)
+				return
+			}
+			curTime := block.GetCurrentTime()
+			if curTime > oldCurExpTime + uint64(10) { // only submit solution if at least 10 seconds of problem validity are left, otherwise by the time others handle the message your solution might be invalid already
+				logger.L.Printf("I solved the block problem with ID %v but I was too slow: The current time is %v but the problem expired at %v + 10 sec. For this reason I will discard my solution.\n", oldCurPrblmID, curTime, oldCurExpTime)
+				return
+			}
+
+			// broadcast your commitment [broadcast hash of hash and also broadcast signature of solHash to "pouw_minerCommitments"]
+			//	1. get hash of hash (H(H(solution)))
+			hashOfSolHash := hash.NewHash(solHash.GetString())
+			//	2. get Sig(solHash)
+			solSig, err := PrivateKey.Sign(solHash.Bytes)
+			if err != nil {
+				logger.L.Panic(err)
+			}
+			// 3. create commitment struct instance and serialize it
+			commitment := simsol.MinerCommitment {
+				OriginalSenderNodeID: MyNodeIDString,
+				HashCommit: hashOfSolHash, 
+				SigCommit: solSig, 
+			}
+			commitmentSer, err := msgpack.Marshal(&commitment)
+			if err != nil {
+				logger.L.Panic(err)
+			}
+			// 4. wrap commitment in ts (transport struct)
+			tsCommit := NewTransportStruct(TSData_MinerCommitment, MyNodeIDString, commitmentSer)
+			// 5. send committment to topic "pouw_minerCommitments"
+			err = TopicSendMessage(ctx, "pouw_minerCommitments", tsCommit)
+			for err != nil {
+				logger.L.Printf("Failed to send topic message: %v\nWill try again..\n", err)
+				RandomShortSleep()
+				err = TopicSendMessage(ctx, "pouw_minerCommitments", tsCommit)
+			}
+
+			logger.L.Printf("Sent commitment to 'pouw_minerCommitments' topic.\n")
+
+			// ---- Ok, now lets send actual solution directly to RA ----
+
+			// send solution to RA
+			//		wrap data in TS
+			simSolutionTS := NewTransportStruct(TSData_SimSol, MyNodeIDString, blockProblemSolutionSer)
+
+			//		cast RA publicKey to RA peerID
+			raPeerID, err := peer.IDFromPublicKey(RApub)
+			if err != nil {
+				logger.L.Panic(err)
+			}
+
+			// 		send data directly to RA
+			chatRetryCounter := 0
+			err = SendViaChat(simSolutionTS, raPeerID, h, ctx)
+			for ((err != nil) && (chatRetryCounter < directChatRetryAmountUpperCap)) {
+				logger.L.Printf("TopicNewProblemReceiveEvent - Failed to send my serialized solution to the RA via direct chat: %v\nWill retry sending it via direct chat..", err)
+				
+				// try again
+				RandomShortSleep()
+				chatRetryCounter += 1
+				err = SendViaChat(simSolutionTS, raPeerID, h, ctx)
+			}
+			// either it worked (no error) or no more retries are allowed
+			if err != nil {
+				logger.L.Panicf("Even after retrying %v times I was not able to send my solution to the RA via direct chat. This makes me want to panic!!!", directChatRetryAmountUpperCap)
+			}
+			logger.L.Printf("Sent my serialized solution with hash %v to the RA.", solHash.GetString())
+
+
+		} else { // case: current problem expires soon so you would probably not be able to solve it in time, so don't waste energy and do not try
 			logger.L.Printf("Will not start mining right away because the current block problem expires soon.\n")
 		}
 	}
 
-	// give signal that initial sync has been completed
-	initialSyncDone <- struct{}{}
+
 
 }
 
