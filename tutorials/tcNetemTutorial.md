@@ -38,7 +38,7 @@ Example Scenarios:
 * 5% Loss + around 100 ms delay + 20% corruption + 8% duplicate: 
 	* ``` sudo tc qdisc replace dev lo root netem loss 5% delay 100ms 10ms 25% corrupt 20% duplicate 8% limit 10000 ```
 
-* 5% Loss + around 100 ms delay + 20% corruption + 8% duplicate + bandwith limited to 1Mbit: 
+* 5% Loss + around 100 ms delay + 20% corruption + 8% duplicate + bandwidth limited to 1Mbit: 
 	* ``` sudo tc qdisc replace dev lo root netem loss 5% delay 100ms 10ms 25% corrupt 20% duplicate 8% rate 1Mbit limit 10000 ```
 
 * reordering of packets method 1 [by using delay]:
