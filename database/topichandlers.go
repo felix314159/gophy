@@ -576,7 +576,10 @@ func TopicChaindbReceiveEvent(m pubsub.Message, h host.Host, ctx context.Context
 	// 3. if you are a light node, check whether you can even serve this request (light node can not respond to full block requests)
 	if !IAmFullNode {
 		if chaindbRequest.WantFullBlock {
-			logger.L.Printf("Ignoring chaindb request because it requests a full block but I am a light node that only stores headers.")
+			if DebugLogging {
+				logger.L.Printf("Ignoring chaindb request because it requests a full block but I am a light node that only stores headers.")
+			}
+			
 			return
 		}
 	}
