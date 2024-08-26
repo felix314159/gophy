@@ -332,13 +332,6 @@ func TopicNewBlockReceiveEvent(m pubsub.Message, h host.Host, ctx context.Contex
 // This implies that the current block problem has expired, the RA reveals the previously generated random bytes whose hash was already known to all nodes.
 // The value is needed to form consensus between nodes on how to choose the block winner from the eligible miners list.
 func TopicNewRASecretRevealEvent(m pubsub.Message, h host.Host, ctx context.Context) {
-	// ignore these topic messages if you are in an initial syncmode
-	curSyncMode := SyncHelper.NodeModeGet()
-	if (curSyncMode == SyncMode_Initial_Light) || (curSyncMode == SyncMode_Initial_Full) || (curSyncMode == SyncMode_Initial_Mine) {
-		logger.L.Printf("I am in an initial sync mode, that's why I will ignore this data.")
-		return
-	}
-	
 	senderNodeID := m.ReceivedFrom.String()
 
 	// access data sent
@@ -387,10 +380,13 @@ func TopicNewRASecretRevealEvent(m pubsub.Message, h host.Host, ctx context.Cont
 // Nodes in initial sync mode ignore messages from this topic.
 func TopicNewProblemReceiveEvent(m pubsub.Message, h host.Host, ctx context.Context) {
 	// ignore these topic messages if you are in an initial syncmode
-	curSyncMode := SyncHelper.NodeModeGet()
-	if (curSyncMode == SyncMode_Initial_Light) || (curSyncMode == SyncMode_Initial_Full) || (curSyncMode == SyncMode_Initial_Mine) {
-		logger.L.Printf("I am in an initial sync mode, that's why I will ignore this data.")
-		return
+	curSyncMode := SyncHelper.NodeModeGet() // this function uses a mutex that is separate from the other SyncHelper mutex (networkingMutex) to avoid unnecessary locking
+	if !(  (curSyncMode == SyncMode_Continuous_Full) || (curSyncMode == SyncMode_Continuous_Light) || (curSyncMode == SyncMode_Continuous_Mine)  ) {
+		if DebugLogging {
+			logger.L.Printf("I am not in a continuous mode, that's why I will ignore this received block problem.") // will be part of received LiveData anyways
+		}
+		
+		return // ignore incoming chaindb topic receive event
 	}
 	
 	// only RA is allowed to send in this topic, so if the signature can't be verified with RApub then ignore it
@@ -678,12 +674,12 @@ func TopicChaindbReceiveEvent(m pubsub.Message, h host.Host, ctx context.Context
 
 // TopicNewCommitmentReceiveEvent is a topic-specific function that is triggered when a node receives a message for topic "pouw_minerCommitments".
 func TopicNewCommitmentReceiveEvent(m pubsub.Message, h host.Host, ctx context.Context) {
-
-	// you only ignore this data if you are in initial sync
+	// you only ignore this data if you have not completed the initial sync yet
 	curSyncMode := SyncHelper.NodeModeGet()
-	if (curSyncMode == SyncMode_Initial_Light) || (curSyncMode == SyncMode_Initial_Full) || (curSyncMode == SyncMode_Initial_Mine) {
-		logger.L.Printf("I am in an initial sync mode, that's why I will ignore this miner commitment data.")
-		return
+	if !(  (curSyncMode == SyncMode_Continuous_Full) || (curSyncMode == SyncMode_Continuous_Light) || (curSyncMode == SyncMode_Continuous_Mine)  ) {
+		logger.L.Printf("I am not in a continuous mode, that's why I will ignore this miner commitment.")
+		
+		return // ignore topic event
 	}
 
 	// determine nodeID of sender (might or might not be the ORIGINAL sender)
@@ -737,11 +733,12 @@ func TopicNewCommitmentReceiveEvent(m pubsub.Message, h host.Host, ctx context.C
 
 // TopicNewTransactionReceiveEvent is a topic-specific function that is triggered when a node receives a message for topic "pouw_transactions".
 func TopicNewTransactionReceiveEvent(m pubsub.Message, h host.Host, ctx context.Context) {
-// you only ignore this data if you are in initial sync
+	// you only ignore this data if you have not completed the initial sync yet
 	curSyncMode := SyncHelper.NodeModeGet()
-	if (curSyncMode == SyncMode_Initial_Light) || (curSyncMode == SyncMode_Initial_Full) || (curSyncMode == SyncMode_Initial_Mine) {
-		logger.L.Printf("I am in an initial sync mode, that's why I will ignore this transaction.")
-		return
+	if !(  (curSyncMode == SyncMode_Continuous_Full) || (curSyncMode == SyncMode_Continuous_Light) || (curSyncMode == SyncMode_Continuous_Mine)  ) {
+		logger.L.Printf("I am not in a continuous mode, that's why I will ignore the received transaction.")
+		
+		return // ignore topic event
 	}
 
 	// determine nodeID of sender (might or might not be the ORIGINAL sender)
