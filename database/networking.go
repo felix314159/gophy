@@ -1226,9 +1226,11 @@ func HandleIncomingChatMessage(chatStream network.Stream, h host.Host, ctx conte
 				logger.L.Panic(errMsg) // this can only happen if UnpackSerializedStringSliceBlockHashes fails which should never happen here 
 			}
 
-			logger.L.Printf("Received these blockhashes:")
-			for _, abc := range recDataBlockHashSlice {
-				logger.L.Printf(abc)
+			if DebugLogging {
+				logger.L.Printf("Received these blockhashes:")
+				for _, abc := range recDataBlockHashSlice {
+					logger.L.Printf(abc)
+				}
 			}
 			
 			// add the marshaled []byte data to the map of the SyncHelper
