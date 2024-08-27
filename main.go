@@ -35,7 +35,7 @@ import (
 	//		*/
 )
 
-const version = "v0.9.25"
+const version = "v0.9.26"
 
 // Example RA Node ID:	 12D3KooWEYSb69dzeojEH1PygPWef9V1qQJqrGKUEMMsbA4keAyZ
 
@@ -56,7 +56,7 @@ func main() {
 	
 	// flags for networking / keeps running
 	topicNamesFlag := flag.String("topicNames", "pouw_chaindb,pouw_newProblem,pouw_newBlock,pouw_minerCommitments,pouw_transactions,pouw_raSecretReveal", "Choose which topics to subscribe to. Must be one string that is comma-separated, contains no spaces and no : chars.")
-	syncModeFlag := flag.String("syncMode", "SyncMode_Initial_Full", "Sets the SyncMode which affects which blockchain data is stored locally, how the node responds to other nodes and generally how it behaves in database. Valid choices are SyncMode_Initial_Full, SyncMode_Initial_Light, SyncMode_Initial_Mine, SyncMode_Continuous_Full, SyncMode_Continuous_Light, SyncMode_Continuous_Mine, SyncMode_Passive_Full and SyncMode_Passive_Light.")
+	syncModeFlag := flag.String("syncMode", "SyncMode_Initial_Full", "Sets the SyncMode which affects which blockchain data is stored locally, how the node responds to other nodes and generally how it behaves in database. Valid choices are SyncMode_Initial_Full, SyncMode_Initial_Light, SyncMode_Initial_Mine, SyncMode_Continuous_Full, SyncMode_Continuous_Light and SyncMode_Continuous_Mine.")
 	raFlag :=  flag.Bool("raMode", false, "Run as RA and sends them simulation task block problems over time. Only possible if you know private key of RA.")
 	raResetFlag := flag.Bool("raReset", false, "Lets RA start new blockchain from scratch (it can't use Initial mode to perform this).")
 	localKeyFileFlag :=  flag.Bool("localKeyFile", false, "Re-uses locally available priv and pubkey instead of generating new keys.")
@@ -97,6 +97,11 @@ func main() {
 	curNodeMode, err := database.StringToMode(*syncModeFlag)
 	if err != nil {
 		logger.L.Printf("Invalid syncModeFlag value provided: %v\nTerminating..", err)
+		return
+	}
+	//		while it internally exists, you are not allowed to set the target sync mode to passive
+	if curNodeMode.String() == "SyncMode_Passive_Full" || curNodeMode.String() == "SyncMode_Passive_Light" {
+		logger.L.Printf("Invalid syncModeFlag value provided: %v\nYou are not allowed to explicitely start the node in passive mode! Terminating..", err)
 		return
 	}
 
