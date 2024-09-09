@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"github.com/felix314159/gophy/database"
+	"github.com/felix314159/gophy/githubversioncheck"
 	"github.com/felix314159/gophy/logger"
 
 	//		/*  this entire block is commented out when you want to use pseudo.go for getting large pseudo blockchain for testing
@@ -35,7 +36,7 @@ import (
 	//		*/
 )
 
-const version = "v0.9.26"
+const version = "v0.9.27"
 
 // Example RA Node ID:	 12D3KooWEYSb69dzeojEH1PygPWef9V1qQJqrGKUEMMsbA4keAyZ
 
@@ -48,6 +49,17 @@ const version = "v0.9.26"
 
 func main() {
 	//		/*
+
+	// First check whether the currently run version of gophy is the newest available release on github (you are allowed to use older versions, just used to inform the user)
+	isUsingNewestGophyVersion, latestVersion, err := githubversioncheck.IsUsingNewestGophyVersion(version)
+	if err != nil {
+		logger.L.Printf("Failed to determine latest release of gophy: %v", err)
+	}
+	if isUsingNewestGophyVersion {
+		logger.L.Printf("You are running the latest version of gophy: %v\n", version)
+	} else {
+		logger.L.Printf("New version of gophy is available: %v\nYou are still using version: %v\nPlease update it manually!\n", latestVersion, version)
+	}
 
 	// ---- Create database folder if it does not exist already ----
 	simsol.CreateFolder(filepath.Join(".", "database"))
@@ -72,7 +84,7 @@ func main() {
 	
 	if *dumpFlag == "nil" && !(*dumpStateFlag) {
 		// separate different executions in the log, also list used flags
-		logger.L.Printf("---- STARTING EXECUTION (version %v) ----\nFlag values used:\n\ttopicNames: %v\n\tsyncMode: %v\n\traMode: %v\n\traReset: %v\n\tlocalKeyFile: %v\n\thttpPort: %v\n\tdockerAlias: %v\n\tdump: %v", version, *topicNamesFlag, *syncModeFlag, *raFlag, *raResetFlag, *localKeyFileFlag, *httpPortFlag, *dockerAliasFlag, *dumpFlag) // never log the password
+		logger.L.Printf("---- STARTING EXECUTION (%v) ----\nFlag values used:\n\ttopicNames: %v\n\tsyncMode: %v\n\traMode: %v\n\traReset: %v\n\tlocalKeyFile: %v\n\thttpPort: %v\n\tdockerAlias: %v\n\tdump: %v", version, *topicNamesFlag, *syncModeFlag, *raFlag, *raResetFlag, *localKeyFileFlag, *httpPortFlag, *dockerAliasFlag, *dumpFlag) // never log the password
 	}
 	
 	// ---- Handle flags ----
