@@ -795,6 +795,13 @@ func TopicNewTransactionReceiveEvent(m pubsub.Message, h host.Host, ctx context.
 
 	// ---
 
+	// trim 'Reference' field of received transaction when necessary
+	if len(recTransaction.Reference) > MaxReferenceLength {
+		trimmedReference := recTransaction.Reference[:MaxReferenceLength]
+		logger.L.Printf("Trimmed 'Reference' field of tx with hash %v to value '%v'\n", recTransaction.TxHash.GetString(), trimmedReference)
+		recTransaction.Reference = trimmedReference
+	}
+
 	// now add it to pending transactions (no duplicates allowed)
 	AddPendingTransaction(recTransaction)
 

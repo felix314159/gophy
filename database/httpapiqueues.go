@@ -63,7 +63,11 @@ func TransactionIsValid(toAddress string, value string, reference string, fee st
 		return false, transaction.Transaction{}
 	}
 
-	// 		2.3 no further checks for reference required
+	// 		2.3 trim reference string when needed and warn user if this occurs (anything after MaxReferenceLength many chars is removed)
+	if len(reference) > MaxReferenceLength {
+		reference = reference[:MaxReferenceLength]
+		logger.L.Printf("TransactionIsValid - Reference field has been trimmed to '%v' because it was too long.\n", reference)
+	}
 
 	// 		2.4 fee float64
 	feeFloat64, err := isValidFloat64(fee)
@@ -124,6 +128,12 @@ func AddPendingTransaction(t transaction.Transaction) {
 			logger.L.Printf("Duplicate transaction with txhash %v was not added to pending transactions because it already is included", t.TxHash.GetString())
 			return
 		}
+	}
+
+	// one more time ensure that 'Reference' field of transaction is not too long
+	if len(t.Reference) > MaxReferenceLength {
+		trimmedReference := t.Reference[:MaxReferenceLength]
+		t.Reference = trimmedReference
 	}
 
 	PendingTransactions = append(PendingTransactions, t)

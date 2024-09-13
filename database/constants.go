@@ -35,6 +35,9 @@ const (
 	// DebugLogging affects how much data is being logged, setting it to true results in a huge log file because all state and state merkle related info is logged
 	DebugLogging = false
 
+	// MaxReferenceLength defines an upper cap for how many chars are allowed to be put in the transaction 'Reference' field
+ 	MaxReferenceLength int = 12
+
 	// SyncMode is an alias for int which is used as a kind of enum that does not exist in Go (remember to add new stuff also to stringer interface in transport.go)
 	SyncMode_Initial_Full	 	Mode = iota + 1 // ensure to NOT start at 0 because that is the nil value of int which could lead to confusing problems
 	SyncMode_Initial_Light
