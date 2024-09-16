@@ -904,7 +904,6 @@ func StateDbTransactionIsAllowed(t transaction.Transaction, readActualStateFromD
 	toNewValAfterTrans = append(toNewValAfterTrans, toAccSer...)
 
 	// This function returns the following values:
-	//		bool:	is this transaction valid?
 	//		error: 	this is either nil (valid transaction) or holds error message (why transaction is not valid)
 	//		string:	t.From (who sent the transaction)
 	//		[]byte:	fromNewValAfterTrans: Serialized StateValueStruct of t.From (state of the transaction sender wallet after transaction would have been sent)
