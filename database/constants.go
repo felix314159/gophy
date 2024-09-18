@@ -26,6 +26,9 @@ const (
 	// TransactionsPerBlockCap is the Transactions per Block Upper Cap (each block can contain up to this many transactions)
 	TransactionsPerBlockCap = 4757 // rough estimate rationale can be found in transaction.go
 
+	// TransactionsPerNodePerBlockCap is an upper cap to the amount of tx each sender is allowed to have included in a singe block (avoids high fee tx spam of a rich malicious node to prevent tx of other nodes)
+	TransactionsPerNodePerBlockCap = 10
+
 	// directChatRetryAmountUpperCap defines how often a node will try to send a message to another node directly via chat protocol when it keeps failing (other node might be offline or not reachable for some other reason so it would not be wise to not have an upper retry cap here)
 	directChatRetryAmountUpperCap = 50
 

@@ -128,6 +128,15 @@ func AddPendingTransaction(t transaction.Transaction) {
 			logger.L.Printf("Duplicate transaction with txhash %v was not added to pending transactions because it already is included", t.TxHash.GetString())
 			return
 		}
+
+		// don't allow nonces that can't be valid (if the first transaction puts nonce x, then following tx of the same node must have higher nonces) [potential issue: you can't guarantee order in which tx are received via pubsub, so this could become problematic if a node spams many tx in a short amount of time]
+		if curT.From == t.From {
+			if curT.Nonce >= t.Nonce {
+			logger.L.Printf("Transaction with txhash %v was not added to pending transactions because it has Nonce:%v but there already is a queued tx from the same node %v with tx hash %v which puts Nonce:%v\n", t.TxHash.GetString(), t.Nonce, curT.From, curT.TxHash.GetString(), curT.Nonce)
+			return
+			}
+		}
+
 	}
 
 	// one more time ensure that 'Reference' field of transaction is not too long
@@ -142,55 +151,110 @@ func AddPendingTransaction(t transaction.Transaction) {
 
 // RAGetPendingTransactions is used by RA to get up to <TransactionsPerBlockCap> many transactions from the PendingTransactions slice.
 // This function is used before a new block is created to fill it with pending transactions.
-// RA always prefers the transactions with the highest Fees (even though RA does not collect the fees, but there needs to be consensus and control how RA has to choose transactions).
-// After determining the transactions that will be included they will be sorted to avoid Nonce conflicts (e.g. node A has three of its transactions included, RA will sort them ascending by nonce when necessary so that when other nodes verify transaction list all 3 can be valid [nonce has to be increased by 1 with each transaction so the order matters])
-// Note: The transaction list returned by this function must still be checked for validity! It's possible that after transaction 1 a sender node is too poor for transaction 2 even if it would seem like two valid transactions in isolation
+// The goal of the algorithm is to prefer high Fee transactions, while also avoiding Nonce conflicts (e.g. same node sends three transactions with nonces 1,2 and 3. Now if tx with Nonce 2 has a fee so low that it is not included in the block, tx with Nonce 3 would be invalid and can not be included as well. you also are not able to dynamically update nonces because then replay attacks would be trivial unless more adjustments in other places are made).
+// Note: The transaction list returned by this function must still be checked for validity! For instance, it's possible that after transaction 1 a sender node is too poor for transaction 2 even if it would seem like two valid transactions in isolation.
 func RAGetPendingTransactions() ([]transaction.Transaction, error) {
 	HttpapiTransactionRMutex.Lock()
 	defer HttpapiTransactionRMutex.Unlock()
 
-	amountOfPendingTransactions := len(PendingTransactions)
-	if amountOfPendingTransactions == 0 {
+	if len(PendingTransactions) == 0 {
 		logger.L.Printf("There are no pending transactions")
 		return []transaction.Transaction{}, nil
 	}
 
-	// holds transactions that will be included in block
-	var results []transaction.Transaction
+	// ---- Phase 1: Prepare by sorting pending transactions ----
 
 	// create copy of PendingTransactions slice so that original is not affected by e.g. sorting
 	copyPending := make([]transaction.Transaction, len(PendingTransactions))
 	copy(copyPending, PendingTransactions)
 
-	// sort it descending by Fee [first element has highest fee] (if fee is the same use secondary field 'From' ascending)
+	// sort it ascending by NodeID (first factor), then ascending by Nonce (secondary factor), then ascending by Fee (third factor)
 	sort.Slice(copyPending, func(i, j int) bool {
-		if copyPending[i].Fee == copyPending[j].Fee {
+		if copyPending[i].From != copyPending[j].From {
 			return copyPending[i].From < copyPending[j].From
+		}
+		if copyPending[i].Nonce != copyPending[j].Nonce {
+			return copyPending[i].Nonce < copyPending[j].Nonce
 		}
 		return copyPending[i].Fee > copyPending[j].Fee
 	})
 
-	// now avoid nonce problems if same Sender has multiple transactions included (so e.g. prefer nonce 1,2,3 over nonce 1,3,2 even if that would make it not sorted by fee anymore) [validity checks will check each transaction in succession from start to end so order matters]
-	for i := 0; i < amountOfPendingTransactions-1; i++ {
-		for j := i + 1; j < amountOfPendingTransactions && copyPending[j].From == copyPending[i].From; j++ {
-			if copyPending[i].Nonce > copyPending[j].Nonce {
-				copyPending[i], copyPending[j] = copyPending[j], copyPending[i]
-			}
-		}
-	}
+	// ---- Phase 2: Start copying transactions, but only as long as both upper caps are respected and each sender's nonce only occurs once ----
 
-	// ok transactions and their order are decided, now put as many in the slice as you are allowed to put in a block
-	for i := 0; i < TransactionsPerBlockCap; i++ {
-		// likely there will be less pending transactions than upper cap per block, so break when you have already put every pending transaction
-		if len(copyPending) == 0 {
+	//	use map to track how many tx each sender has included in the current block already
+	countMap := make(map[string]int) // From -> Fee
+	//  	use counter to track how many tx have been included in this block in total
+	txCounter := 0
+
+	var almostFinalTxList []transaction.Transaction
+	for _, t := range copyPending {
+		// ensure upper cap for tx/block is respected
+		if txCounter >= TransactionsPerBlockCap {
 			break
 		}
 
-		results = append(results, copyPending[0])
-		copyPending = copyPending[1:] // remove element from slice copy
+		// ensure upper cap for txPerSenderPerBlock is respected
+		fromCounter, exists := countMap[t.From]
+		if exists {
+			if countMap[t.From] >= TransactionsPerNodePerBlockCap {
+				continue // this tx can not be included because the Sender node has already reached his cap for this block
+			}
+		}
+
+		// only add the tx to the new list if it does not already contain a tx from the same sender with the same nonce
+		allowed := true
+		for _, tTemp := range almostFinalTxList {
+			if tTemp.From == t.From {
+				if tTemp.Nonce == t.Nonce {
+					allowed = false
+				}
+			}
+		}
+		if allowed {
+			almostFinalTxList = append(almostFinalTxList, t)
+			txCounter += 1 // for global tx counter for this block
+
+			if exists {
+				countMap[t.From] = fromCounter + 1 	// when added 'From' does exist only increase its counter by 1
+			} else {
+				countMap[t.From] = 1 				// otherwise initialize it to 1
+			}
+		}
+
 	}
 
-	return results, nil
+	// ---- Phase 3: Resolve nonce conflicts ----
+	// Rationale: Due to capping amount of tx per sender and sorting by fee it now is possible that a higherNonce-higherFee tx of a sender now comes before a lowerNonce tx of the same Sender. Since this is not possible, invalid transactions are now being removed to guarantee a valid resulting tx list. Sender Nodes are advised to avoid tx finalization delays by giving the highest fee for their first tx and decreasing fees for each additional tx they try to have included in the same block.
+
+	// GOAL: for each tx of sender x, ensure that in the tx list each tx nonce of x's tx's follows with a nonce that is not increased by 1
+
+	var finalTxList []transaction.Transaction
+	var prevTx transaction.Transaction
+	for index, t := range almostFinalTxList {
+		// at last element stop because last+1 does not exist
+		if index == len(almostFinalTxList) {
+			break
+		}
+
+		if prevTx.From != t.From { // if prevTx has not been set this works too because it will an empty string
+			// this is the first tx of a sender that did not occur before so the tx is allowed
+			prevTx = t
+			finalTxList = append(finalTxList, t)
+			continue
+		}
+
+		// same sender has already another tx included, so let's see if current nonce is valid (increased by 1)
+		if prevTx.Nonce + 1 == t.Nonce {
+			// it is valid, so include the current tx too
+			prevTx = t
+			finalTxList = append(finalTxList, t)
+		}
+	}
+
+	return finalTxList, nil
+
+	// Note1 : This algorithm slightly favors alphabetically-early nodeIDs in rare scenarios where lots of pending transactions lead to situations where not all transactions can be included in the next block. A 'fairer' algorithm here would significantly be more complex because the nonce validity has to be ensured at the same time while also generally preferring high fee transactions.
+	// Note2: Even though this algorithm filters out duplicate tx nonces from the same 'From', you should ensure that the function that adds incoming transactions to the PendingTransactions queue does not allow dupliate nonces (or invalidly low nonces), because while filtered out at first execution they would appear the second time but would be invalid by then (this function assumes that the lowest nonce of a sender's queued transactions should be valid).
 }
 
 // PendingTransactionsRemoveThese takes a list of transactions that were included in a block and removes them from pending transactions if possible
