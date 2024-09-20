@@ -22,13 +22,14 @@ import (
 // SimtaskValidityCheck takes a simulationTask (problem def) and the latest block header, and then determines whether this simTask is valid or not and returns err (only nil return means valid).
 // Rules:
 //	 	Header:
-//			1. s.CreationTime > b.Timestamp
-//			2. s.ExpirationTime > s.CreationTime
-//			3. s.BlockId == b.BlockID + 1
+//			1. s.SimHeader.CreationTime > b.Timestamp
+//			2. s.SimHeader.ExpirationTime > s.SimHeader.CreationTime
+//			3. s.SimHeader.BlockId == b.BlockID + 1
+//		  3.5. s.SimHeader.AmountSubProblems == len(s.SimHeader.SubProblemHashes) == len(s.SimPar)
 //   	Subproblems:
-//			4. s.Seed converted to hex string must match first 6 chars of blockHash of b
-//			5. s.Seed must be <= 900000000 (pythia max seed)
-//			6. s.Particles must be equal to 0 (pions), 1 (eplus) or 2 (proton)
+//			4. Seed converted to hex string must match first 6 chars of blockHash of b
+//			5. Seed must be <= 900000000 (pythia max seed)
+//			6. Particles must be equal to 0 (pions), 1 (eplus) or 2 (proton)
 //			7. Hash of subproblem is valid (re-create the SimulationParameters object and compare with hash that will automatically be calculated)
 func SimtaskValidityCheck(s simpar.SimulationTask, h block.Header) error {
 	// preparation: re-calculate blockHash
@@ -54,6 +55,11 @@ func SimtaskValidityCheck(s simpar.SimulationTask, h block.Header) error {
 	// rule 3
 	if s.SimHeader.BlockID != h.BlockID + 1 {
 		return fmt.Errorf("SimtaskValidityCheck - Simpar block ID is %v but the latest block ID is %v. This is not allowed, the simpar block ID must be exactly 1 larger than the latest block ID!\n", s.SimHeader.BlockID, h.BlockID)
+	}
+
+	// rule 3.5 (ensure that the amount of expected subproblems is equal to amount of actually contained ones)
+	if (int(s.SimHeader.AmountSubProblems) != len(s.SimHeader.SubProblemHashes)) || (len(s.SimHeader.SubProblemHashes) != len(s.SimPar)) {
+		return fmt.Errorf("SimtaskValidityCheck - Simpar sets AmountSubProblems to %v which must be equal to len(SubProblemHashes)=%v and len(SimPar)=%v, but this is not the case.\n", s.SimHeader.AmountSubProblems, len(s.SimHeader.SubProblemHashes), len(s.SimPar))
 	}
 
 	// ---- Validity check of each subproblem ----
