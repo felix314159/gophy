@@ -46,7 +46,7 @@ func SimtaskValidityCheck(s simpar.SimulationTask, h block.Header) error {
 		return fmt.Errorf("SimtaskValidityCheck - Simpar CreationTime is %v but this is not larger than the latest block time %v which is not allowed! \n", s.SimHeader.CreationTime, h.BlockTime)
 	}
 
-	// rule 2
+	// rule 2, Note: it could be enforced that time that miners have to solve the problem is at least as large as database.BlockTime, but I think it for now is better to allow the RA to use the BlockTime as a recommendation instead of an enforced value
 	if s.SimHeader.ExpirationTime < s.SimHeader.CreationTime {
 		return fmt.Errorf("SimtaskValidityCheck - Simpar ExpirationTime is %v and CreationTime is %v. This is not allowed, the ExpirationTime must be later/larger than the CreationTime!\n", s.SimHeader.ExpirationTime, s.SimHeader.CreationTime)
 	}
