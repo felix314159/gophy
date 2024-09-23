@@ -66,8 +66,8 @@ func SimtaskValidityCheck(s simpar.SimulationTask, h block.Header) error {
 	for subProblemIndex, subProblem := range s.SimPar {
 		// rule 4
 		seedString := uint32ToHexString(subProblem.Seed)
-		if !(strings.HasPrefix(blkHash, seedString)) {
-			return fmt.Errorf("SimtaskValidityCheck - Hash of latest block is %v but got seed %v. The seed must be a prefix of the block hash! \n", blkHash, seedString)
+		if !(strings.HasPrefix(strings.ToUpper(blkHash), strings.ToUpper(seedString))) {
+			return fmt.Errorf("SimtaskValidityCheck - Hash of latest block is %v but got seed %v. The seed must be a prefix of the block hash, but when applying uint32ToHexString you get: %v which is not the required prefix! \n", blkHash, subProblem.Seed, seedString)
 		}
 
 		// rule 5
