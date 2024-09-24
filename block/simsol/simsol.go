@@ -82,6 +82,7 @@ type MinerCommitment struct {
 	OriginalSenderNodeID  	string 		// NodeID who this commitment is originally from. This is required because pubsub.Message.ReceivedFrom is the address of whoever forwarded the message to you, but this does not have to be the original sender!
 	HashCommit				hash.Hash 	// Hash of hash (prove you know the hash without revealing it)
 	SigCommit 				[]byte 		// Sig of hash (so that miners can not just re-broadcast the Hash-of-hashes of other miners' solutions)
+	Timestamp 				uint64  	// Time at which the commitment was created (used to prevent replay attacks)
 }
 
 

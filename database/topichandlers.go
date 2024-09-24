@@ -500,7 +500,8 @@ func TopicNewProblemReceiveEvent(m pubsub.Message, h host.Host, ctx context.Cont
 	commitment := simsol.MinerCommitment {
 		OriginalSenderNodeID: MyNodeIDString,
 		HashCommit: hashOfSolHash, 
-		SigCommit: solSig, 
+		SigCommit: solSig,
+		Timestamp: curTime,
 	}
 	commitmentSer, err := msgpack.Marshal(&commitment)
 	if err != nil {
@@ -701,9 +702,18 @@ func TopicNewCommitmentReceiveEvent(m pubsub.Message, h host.Host, ctx context.C
 	if err != nil {
 		logger.L.Panic(err)
 	}
+	// ensure value for OriginalSenderNodeID has been set
 	if recCommitment.OriginalSenderNodeID == "" {
 		logger.L.Panicf("Deserialized MinerCommitment seems to have empty OriginalSenderNodeID field! BTW, I received this message from %v. Aborting.", senderNodeID)
 	}
+	// ensure timestamp of commitment is valid (must be later than creationtime of currently active blockproblem and earlier than current time)
+	currentProblemCreationTime := BlockProblemHelper.SimulationTask.SimHeader.CreationTime
+	timeRn := block.GetCurrentTime()
+	if (recCommitment.Timestamp <= currentProblemCreationTime) || (recCommitment.Timestamp > timeRn) {
+		logger.L.Printf("MinerCommitment has been ignored because its Timestamp is invalid. Expected sth later than %v and earlier than %v but got: %v. BTW, I received this message from %v.\n", currentProblemCreationTime, timeRn, recCommitment.Timestamp, senderNodeID)
+		return
+	}
+
 
 	// remember each miners commitment until the next block has been verified and accepted
 	newMiner := NewActiveMiner(recCommitment)

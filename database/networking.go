@@ -578,6 +578,7 @@ func SyncNode(ctx context.Context, h host.Host, initialSyncDone chan struct{}) {
 				OriginalSenderNodeID: MyNodeIDString,
 				HashCommit: hashOfSolHash, 
 				SigCommit: solSig, 
+				Timestamp: curTime,
 			}
 			commitmentSer, err := msgpack.Marshal(&commitment)
 			if err != nil {
