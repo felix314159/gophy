@@ -382,9 +382,9 @@ func RAReceivedSimSol(tsData []byte, senderPubKey crypto.PubKey, senderNodeID st
 		return
 	}
 
-	// ensure amount of received data is not larger than 10 GB
-	if len(simDataSer) > 10737418240 {
-		logger.L.Printf("RAReceivedSimSol - Received simulation data from miner %v with hash %v is invalid because it is larger than 10 GB which is not allowed!", senderNodeID, actualSolutionHash)
+	// ensure amount of received data is not larger than upper cap that was set
+	if uint64(len(simDataSer)) > RAMaxSizeAcceptedSolutionData {
+		logger.L.Printf("RAReceivedSimSol - Received simulation data from miner %v with hash %v is invalid because it is larger than %v bytes which is not allowed!", senderNodeID, actualSolutionHash, RAMaxSizeAcceptedSolutionData)
 		return
 	}
 

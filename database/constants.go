@@ -41,6 +41,9 @@ const (
 	// MaxReferenceLength defines an upper cap for how many chars are allowed to be put in the transaction 'Reference' field
  	MaxReferenceLength int = 12
 
+ 	// RAMaxSizeAcceptedSolutionData defines the maximum size of solution data in bytes that can be accepted from a miner (to prevent resource-exhaustion attacks there should be an upper cap)
+ 	RAMaxSizeAcceptedSolutionData uint64 = 1073741824 // 1 GB
+
 	// SyncMode is an alias for int which is used as a kind of enum that does not exist in Go (remember to add new stuff also to stringer interface in transport.go)
 	SyncMode_Initial_Full	 	Mode = iota + 1 // ensure to NOT start at 0 because that is the nil value of int which could lead to confusing problems
 	SyncMode_Initial_Light
