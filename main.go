@@ -374,13 +374,13 @@ func main() {
     scalingLimits := rsrcmngr.DefaultLimits
     libp2p.SetDefaultServiceLimits(&scalingLimits) // https://github.com/libp2p/go-libp2p/tree/master/p2p/host/resource-manager
     limiter := rsrcmngr.NewFixedLimiter(scalingLimits.AutoScale())
-    // create resourcemanager that makes use of the limiter
-    resourceManager, err := rsrcmngr.NewResourceManager(limiter)
+    // create resourcemanager that makes use of the limiter (no need for prometheus metrics)
+    resourceManager, err := rsrcmngr.NewResourceManager(limiter, rsrcmngr.WithMetricsDisabled())
     if err != nil {
     	logger.L.Panicf("failed to create resource manager: %v\n", err)
     }
 
-    // debug
+    // show/log limits used
     systemLimits := limiter.GetSystemLimits()
     PrintAllResourceLimits(systemLimits, "System Limits")
     transientLimits := limiter.GetTransientLimits()
