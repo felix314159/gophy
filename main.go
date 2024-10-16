@@ -30,6 +30,7 @@ import (
 	libp2p "github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	rsrcmngr "github.com/libp2p/go-libp2p/p2p/host/resource-manager"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -369,6 +370,21 @@ func main() {
     //     panic(err)
     // }
 
+    // prevent DoS attacks by using a limiter, default values are sufficient i think (https://github.com/libp2p/go-libp2p/blob/master/p2p/host/resource-manager/limit_defaults.go#L665)
+    scalingLimits := rsrcmngr.DefaultLimits
+    libp2p.SetDefaultServiceLimits(&scalingLimits) // https://github.com/libp2p/go-libp2p/tree/master/p2p/host/resource-manager
+    limiter := rsrcmngr.NewFixedLimiter(scalingLimits.AutoScale())
+    // create resourcemanager that makes use of the limiter
+    resourceManager, err := rsrcmngr.NewResourceManager(limiter)
+    if err != nil {
+    	logger.L.Panicf("failed to create resource manager: %v\n", err)
+    }
+
+    // debug
+    systemLimits := limiter.GetSystemLimits()
+    PrintAllResourceLimits(systemLimits, "System Limits")
+    transientLimits := limiter.GetTransientLimits()
+    PrintAllResourceLimits(transientLimits, "Transient Limits")
 
     // use ifps team hosted bootstrap servers (https://github.com/ipfs/kubo/blob/master/config/bootstrap_peers.go#L17)
     var bootstrapPeers []peer.AddrInfo
@@ -391,6 +407,9 @@ func main() {
 		libp2p.EnableAutoRelayWithStaticRelays(bootstrapPeers), // become publicly available via ipfs hosted bootstrap nodes that act as relay servers
 		libp2p.EnableHolePunching(), 	// enable holepunching
         libp2p.NATPortMap(), 			// try to use upnp to open port in firewall
+
+        // use resource manager with limiter
+        libp2p.ResourceManager(resourceManager),
 
         // ---- this will be used implicitely ----
 
@@ -419,6 +438,7 @@ func main() {
 	if err != nil {
 		logger.L.Panic(err)
 	}
+
 
 	// ---- Set stream handler for direct communication via chat protocol ----
 	h.SetStreamHandler("/chat/1.0", func(stream network.Stream) {
@@ -587,4 +607,9 @@ func FixLinuxBuffer() {
 	}
 
 	logger.L.Printf("Thanks, QUIC-go UDP buffer size has been set to recommended value of 2048 kiB.")
+}
+
+// PrintAllResourceLimits is used to print and log all limits used by a node. First argument is the limit object, second argument is a string that describes which limit is passed (system or transient)
+func PrintAllResourceLimits(l rsrcmngr.Limit, limitType string) {
+	logger.L.Printf("%v:\n\tMemory Limit: %v\n\tStream Limit (Inbound): %v\n\tStream Limit (Outbound): %v\n\tTotal Stream Limit: %v\n\tConn Limit (Inbound): %v\n\tConn Limit (Outbound): %v\n\tConn Total Limit: %v\n\tFile Descriptor Limit: %v\n\n", limitType, l.GetMemoryLimit(), l.GetStreamLimit(network.DirInbound), l.GetStreamLimit(network.DirOutbound), l.GetStreamTotalLimit(), l.GetConnLimit(network.DirInbound), l.GetConnLimit(network.DirOutbound), l.GetConnTotalLimit(), l.GetFDLimit())
 }
