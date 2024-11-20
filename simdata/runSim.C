@@ -1,71 +1,39 @@
-// How to run example:
-// 		root -l -q -b 'runSim.C(123, 14, 100, 0, 2., 0., "abcdef")'
-// This allows passing parameters e.g. randomSeed 123, nEvents 14, runID 100, chosenPart 0 (pions), momentum 2., theta 0 and subproblem hash abcdef.
-
-void runSim( // default values that can be overwritten by passing arguments like shown above
+void runSim( 
 					UInt_t randomSeed = 1234,
 				   	Int_t nEvents = 10,
 				   	Int_t runID = 1337,
-				   	Int_t chosenPart = 0,		// 0=pions, 1=eplus, 2=proton
-				   	Double_t momentum = 2.,
+				   	Int_t chosenPart = 0,		            // not used, but kept here for compatibility with existing code
+				   	Double_t momentum = 2.,                 // beam energy
 				   	Double_t theta = 0.,
-				   	const char* subProblemHash = "abcdef", // must be const, otherwise you get "ISO C++11 does not allow conversion from string literal to 'char *'" warnings
-                   	TString mcEngine = "TGeant4", // you could also use TGeant3
+				   	const char* subProblemHash = "abcdef",
+                   	TString mcEngine = "TGeant4",           // use geant4
                    	Bool_t isMT = true,
                    	Bool_t loadPostInitConfig = false)
 {
 
-    TString dir = getenv("VMCWORKDIR");
-    TString tutdir = dir + "/simulation/Tutorial1";
-
-    TString tut_geomdir = dir + "/common/geometry";
-    gSystem->Setenv("GEOMPATH", tut_geomdir.Data());
-
-    TString tut_configdir = dir + "/common/gconfig";
-    gSystem->Setenv("CONFIG_DIR", tut_configdir.Data());
-
-    TString partName[] = {"pions", "eplus", "proton"};
-    Int_t partPdgC[] = {211, 11, 2212};
-    
+    // output resulting files in same folder as this script
     TString outDir = "./";
-
-    // you must use ?reproducible=<name> to have a reproducible hash (note that changing <name> also affects hash!)
     TString outFile = Form("%s/mc_%s.root?reproducible=mc", outDir.Data(), subProblemHash);
-
-	// you must use ?reproducible=<name>
     TString geoFile = Form("geofile_%s.root?reproducible=geofile", subProblemHash);
 
-    // Configure Simulation
-    // ========================================================================
-
-    // ----    Debug option   -------------------------------------------------
+    // configure simulation
     gDebug = 0;
-    // ------------------------------------------------------------------------
-
-    // -----   Timer   --------------------------------------------------------
     TStopwatch timer;
     timer.Start();
-    // ------------------------------------------------------------------------
 
-    // -----   Create simulation run   ----------------------------------------
     FairRunSim* run = new FairRunSim();
-    // you need to set the same run ID if you want reproducible hash! line below makes tutorial1_TGeant3_pions.mc.. file hash consistent
-    run->SetRunId(runID);
-    run->SetName(mcEngine);   // Transport engine
+    run->SetRunId(runID);   // use passed runID (line 102 of https://fairrootgroup.github.io/FairRoot/html/df/d06/FairRun_8h_source.html)
+    run->SetName(mcEngine);
     FairGenericVMCConfig* config = new FairGenericVMCConfig();
     if (loadPostInitConfig)
         config->UsePostInitConfig();
     run->SetSimulationConfig(config);
-    run->SetIsMT(isMT);                            // Multi-threading mode (Geant4 only)
-    run->SetSink(new FairRootFileSink(outFile));   // Output file
+    run->SetIsMT(isMT);     // multithreading is enabled
+    run->SetSink(new FairRootFileSink(outFile));
     FairRuntimeDb* rtdb = run->GetRuntimeDb();
-    // ------------------------------------------------------------------------
 
-    // -----   Create media   -------------------------------------------------
-    run->SetMaterials("media.geo");   // Materials
-    // ------------------------------------------------------------------------
-
-    // -----   Create geometry   ----------------------------------------------
+    // use some fair tutorial geometries as PoC
+    run->SetMaterials("media.geo");
 
     FairModule* cave = new FairCave("CAVE");
     cave->SetGeometryFileName("cave_vacuum.geo");
@@ -74,36 +42,42 @@ void runSim( // default values that can be overwritten by passing arguments like
     FairDetector* tutdet = new FairTutorialDet1("TUTDET", kTRUE);
     tutdet->SetGeometryFileName("double_sector.geo");
     run->AddModule(tutdet);
-    // ------------------------------------------------------------------------
 
-    // -----   Create PrimaryGenerator   --------------------------------------
     FairPrimaryGenerator* primGen = new FairPrimaryGenerator();
-    FairBoxGenerator* boxGen = new FairBoxGenerator(partPdgC[chosenPart], 1);
-
-    boxGen->SetThetaRange(theta, theta + 0.01);
-    boxGen->SetPRange(momentum, momentum + 0.01);
-    boxGen->SetPhiRange(0., 360.);
-    boxGen->SetDebug(kTRUE);
+    // set particle type that is generated (here 2212=proton, but this should in the future be passed as parameter to the script for more flexibility)
+    FairBoxGenerator* boxGen = new FairBoxGenerator(2212, 1); // first parameter is PDG encoding of particle type (2212 = proton), 1 = multiplicity (https://fairrootgroup.github.io/FairRoot/html/db/dfe/FairBoxGenerator_8cxx_source.html line 69)
+    // in-depth publication about the MC PDG codes at https://pdg.lbl.gov/2024/mcdata/mc_particle_id_contents.html , or just download the database that contains all the codes at https://pdg.lbl.gov/2024/api/index.html and in it check table 'pdgdata'
+    // e.g fluka uses its own mapping to the existing pdg numbers: http://www.fluka.org/content/manuals/online/5.1.html
+    // PDG Code Examples:
+    //      11      = Electron
+    //      2212    = Proton
+    //      22      = Photon
+    //      2112    = Neutron
+    boxGen->SetThetaRange(0., theta);                        // set passed theta range
+    boxGen->SetPRange(0., momentum);                         // set passed momentum range
+    boxGen->SetPhiRange(0., 360.);                           // set phi range (currently not passed)
+    // as shown in https://fairrootgroup.github.io/FairRoot/html/d1/dbd/FairBoxGenerator_8h_source.html more parameters could be specified like e.g.:
+    //  - SetPtRange
+    //  - SetEkinRange
+    //  - SetEtaRange
+    //  - SetYRange
 
     primGen->AddGenerator(boxGen);
-
     run->SetGenerator(primGen);
-    // ------------------------------------------------------------------------
 
-    // -----   Initialize simulation run   ------------------------------------
+    // use pythia6 as external decayer (https://fairroot.gsi.de/index.html%3Fq=node%252F57.html)
+    run->SetPythiaDecayer(kTRUE);
+
+    // set passed custom RNG seed
     TRandom3 random(randomSeed);
     gRandom = &random;
 
+    // run simtask
     run->Init();
-    // ------------------------------------------------------------------------
-
-    // -----   Start run   ----------------------------------------------------
     run->Run(nEvents);
     run->CreateGeometryFile(geoFile);
-    // ------------------------------------------------------------------------
 
-    // -----   Measure execution time   ---------------------------------------
-
+    // measure execution time
     cout << endl << endl;
 
     FairSystemInfo sysInfo;
@@ -125,6 +99,4 @@ void runSim( // default values that can be overwritten by passing arguments like
     cout << "Output file is " << outFile << endl;
     cout << "Real time " << rtime << " s, CPU time " << ctime << "s" << endl << endl;
     cout << "Macro finished successfully." << endl;
-
 }
-
