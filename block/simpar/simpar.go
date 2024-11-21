@@ -160,9 +160,9 @@ func (s SimulationTask) RunSimulation() ([]byte, hash.Hash, error) {
 		
 		// try to run simulation
 		cmd := exec.Command("bash", "-c", "cd ./simdata && " + simCommand + " >> /dev/null 2>&1")
-		_, err := cmd.CombinedOutput()
+		errorDescription, err := cmd.CombinedOutput()
 		if err != nil {
-			logger.L.Printf("Error: %v", err)
+			logger.L.Printf("Error: %v\n%v", err, errorDescription)
 			return nil, hash.Hash{}, fmt.Errorf("RunSimulation - Failed to run simulation command: %v\n", err)
 		}
 		logger.L.Printf("%v: Successfully solved problem #%v/%v\n---\n", GetTime(), pIndex, s.SimHeader.AmountSubProblems-1)

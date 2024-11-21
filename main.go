@@ -37,7 +37,7 @@ import (
 	//		*/
 )
 
-const version = "v0.9.31"
+const version = "v0.9.32"
 
 // Example RA Node ID:	 12D3KooWEYSb69dzeojEH1PygPWef9V1qQJqrGKUEMMsbA4keAyZ
 
