@@ -61,6 +61,9 @@ func extractVersionFromHtml(content string) (string, error) {
 	version = strings.TrimRight(version, ".")
 
 	// e.g. now version = "v0.9.12"
+	if version == "" {
+		return "", fmt.Errorf("Something went wrong. If you see the error 'tls: failed to verify certificate: x509: certificate signed by unknown authority' and you are NOT using a Dokcer scratch container, then you should try the following, assuming you are using linux: 'sudo apt update && sudo apt install --reinstall ca-certificates'")
+	}
 
 	return version, nil
 }

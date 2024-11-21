@@ -80,9 +80,12 @@ then in order to statically build the gophy binary use one of the following comm
 * Windows:
 
     * ```CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build .```
-* MacOS:
+* MacOS (x64):
 
     * ```CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build .```
+* MacOS (Apple Silicon - ARM):
+
+    * ```CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build .```
 * Linux-based OS:
 
     * ```CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build .```

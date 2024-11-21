@@ -51,17 +51,6 @@ const version = "v0.9.31"
 func main() {
 	//		/*
 
-	// First check whether the currently run version of gophy is the newest available release on github (you are allowed to use older versions, just used to inform the user)
-	isUsingNewestGophyVersion, latestVersion, err := githubversioncheck.IsUsingNewestGophyVersion(version)
-	if err != nil {
-		logger.L.Printf("Failed to determine latest release of gophy: %v", err)
-	}
-	if isUsingNewestGophyVersion {
-		logger.L.Printf("You are running the latest version of gophy: %v\n", version)
-	} else {
-		logger.L.Printf("New version of gophy is available: %v\nYou are still using version: %v\nPlease update it manually!\n", latestVersion, version)
-	}
-
 	// ---- Create database folder if it does not exist already ----
 	simsol.CreateFolder(filepath.Join(".", "database"))
 
@@ -90,6 +79,20 @@ func main() {
 	
 	// ---- Handle flags ----
 	
+	// Check whether the currently run version of gophy is the newest available release on github (you are allowed to use older versions, just used to inform the user)
+	// Only perform this check when you are NOT running this in a docker scratch container (that container does not have CA certficates so it would fail with 'tls: failed to verify certificate: x509: certificate signed by unknown authority')
+	if (*dockerAliasFlag != "1f") && (*dockerAliasFlag != "2f") && (*dockerAliasFlag != "3f") && (*dockerAliasFlag != "4l") && (*dockerAliasFlag != "5l") && (*dockerAliasFlag != "6l") && (*dockerAliasFlag != "ra") {
+		isUsingNewestGophyVersion, latestVersion, err := githubversioncheck.IsUsingNewestGophyVersion(version)
+		if err != nil {
+			logger.L.Printf("Failed to determine latest release of gophy: %v", err)
+		}
+		if isUsingNewestGophyVersion {
+			logger.L.Printf("You are running the latest version of gophy: %v\n", version)
+		} else {
+			logger.L.Printf("New version of gophy is available: %v\nYou are still using version: %v\nPlease update it manually!\n", latestVersion, version)
+		}
+	}
+
 	// only allow user ports to avoid port conflicts
 	database.HttpPort = *httpPortFlag
 	if (database.HttpPort < 1024) || (database.HttpPort > 49151) || (database.HttpPort == 12345) {
