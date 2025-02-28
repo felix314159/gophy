@@ -202,7 +202,7 @@ The documentation contains more detailed information than this repository and sh
 
 For more information about Proof-of-Useful-Work and its challenges compared to traditional hash-based Proof-of-Work check out [Challenges of Proof-of-Useful-Work (PoUW)](https://ieeexplore.ieee.org/document/10087185).
 The blockchain architecture behind gophy is described in more detail in this [peer-reviewed publication](https://ieeexplore.ieee.org/document/10844433) and in this [Arxiv preprint](https://arxiv.org/abs/2404.09093).
-The fair and transparent winner selection algorithm used for selecting block winners in gophy is described in more detail in the open-access ACM Distributed Ledger Technologies Journal: Research and Practice publication [DFTWS]([https://arxiv.org/abs/2312.01951](https://dl.acm.org/doi/10.1145/3721139)). Code to analyze the fairness of DFTWS can be found [here](https://github.com/felix314159/dftws-fairnessEvaluation).
+The fair and transparent winner selection algorithm used for selecting block winners in gophy is described in more detail in the open-access ACM Distributed Ledger Technologies Journal: Research and Practice publication [DFTWS](https://dl.acm.org/doi/10.1145/3721139). Code to analyze the fairness of DFTWS can be found [here](https://github.com/felix314159/dftws-fairnessEvaluation).
 The most comprehensive description and analysis of gophy will be my dissertation that can be expected to be published late 2024/early 2025.
 
 
